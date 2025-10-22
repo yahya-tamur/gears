@@ -1,2 +1,4 @@
 *.geany
+*.stl
+__pycache__/*
 *.out
