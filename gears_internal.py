@@ -1,3 +1,4 @@
+from math import sin, cos, tan, atan, asin, acos, pi, sqrt
 
 # get two arrays of points (same length >= 3)
 # no top or bottom.
@@ -37,6 +38,31 @@ def interpolate_line(a, b, n, endpoints=True):
         ans.append(b)
     return ans
 
+def center(points):
+    n = 0
+    ax, ay, az = 0, 0, 0
+    for (x, y, z) in points:
+        n += 1
+        ax += (x-ax)/n
+        ay += (y-ay)/n
+        az += (z-az)/n
+    return ax, ay, az
+
+def euclidean(x, y, z):
+    return sqrt(x*x + y*y + z*z)
+
+def project(points, center, dist):
+    cx, cy, cz = center
+    ans = []
+    for (x, y, z) in points:
+        v = euclidean(x-cx, y-cy, z-cz)
+        x_ = cx + dist*(x-cx)/v
+        y_ = cy + dist*(y-cy)/v
+        z_ = cz + dist*(z-cz)/v
+        ans.append((x_, y_, z_))
+    return ans
+
+
 #same behavior as openscad rotate(a=...) but rotates a list of points
 def rotate(a, l):
 
@@ -55,7 +81,6 @@ def rotate(a, l):
         l[i] = (x, y, z)
 
 
-from math import sin, cos, tan, atan, asin, acos, pi
 
 # all angles are in RADIANS here!!!!
 
@@ -189,8 +214,21 @@ def bevel_gear_assembly(modul, tooth_number, partial_cone_angle, tooth_width, bo
     top_face += top_line
     bottom_face += bottom_line
 
-    ans += triangulate_polyhedron(top_face)
-    ans += triangulate_polyhedron(bottom_face)
+    if bore == 0:
+        ans += triangulate_polyhedron(top_face)
+        ans += triangulate_polyhedron(bottom_face)
+
+    else:
+        top_center = center(top_face)
+
+        top_bore = project(top_face, top_center, bore)
+
+        bottom_center = center(bottom_face)
+        bottom_bore = project(bottom_face, bottom_center, bore)
+
+        ans += triangulate_prism(top_face, top_bore, open=False)
+        ans += triangulate_prism(top_bore, bottom_bore, open=False)
+        ans += triangulate_prism(bottom_face, bottom_bore, open=False)
     #for i in range(1, len(top_face), 2):
         #ans += triangulate_polyhedron
 
