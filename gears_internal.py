@@ -10,7 +10,7 @@ def triangulate_prism(top, bottom, open=False):
 
     if not open:
         ans.append([top[-1],bottom[-1], top[0]]) 
-        ans.append([top[0],bottom[0], bottom[-1]]) 
+        ans.append([top[0],bottom[-1], bottom[0]]) 
 
     for i in range(len(top)-1):
         ans.append([top[i], bottom[i], top[i+1]])
