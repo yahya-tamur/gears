@@ -17,7 +17,7 @@ def triangulate_prism(top, bottom, open=False):
         ans.append([top[i+1], bottom[i], bottom[i+1]])
     return ans
 
-def triangulate_polyhedron(p, center=None):
+def triangulate_polyhedron(p, center=None, reverse=False):
     start = 0
     if center is None:
         center = p[0]
@@ -26,7 +26,10 @@ def triangulate_polyhedron(p, center=None):
     ans = []#[[center, p[-1], p[0]]]
 
     for i in range(start, len(p)-1):
-        ans.append([center, p[i], p[i+1]])
+        if reverse:
+            ans.append([center, p[i+1], p[i]])
+        else:
+            ans.append([center, p[i], p[i+1]])
 
     return ans
 
@@ -35,7 +38,7 @@ def interpolate_line(a, b, n, endpoints=True):
     if endpoints:
         ans.append(a)
     for k in range(1, n):
-        ans.append(tuple((a[i]*k + b[i]*(n-k))/n for i in range(3)))
+        ans.append(tuple((a[i]*(n-k) + b[i]*k)/n for i in range(3)))
     if endpoints:
         ans.append(b)
     return ans
@@ -102,6 +105,15 @@ def sphere_ev(t0, t):
 def sph_to_cart(v):
     r, theta, phi = v
     return (r*sin(theta)*cos(phi), r*sin(theta)*sin(phi), r*cos(theta))
+
+
+def printline(prefix, line):
+    print(prefix, end='')
+
+    for (x, y, z) in line:
+        print('(%.2f %.2f %.2f)' % (x, y, z), end='')
+    print()
+
 
 def bevel_gear_data(modul, tooth_number, partial_cone_angle, tooth_width, pressure_angle, helix_angle, tooth_step):
 
@@ -170,7 +182,7 @@ def bevel_gear_data(modul, tooth_number, partial_cone_angle, tooth_width, pressu
         translate([0,0,height_f], pt_list)
         rotate([0,0,phi_r+pi/2*(1-clearance)/tooth_number], pt_list)
 
-    return (tooth_nw, tooth_ne, tooth_sw, tooth_se, tau)
+    return (tooth_nw, tooth_ne, tooth_sw, tooth_se, -tau)
 
 # do translation/rotation next
 def bevel_gear_assembly(modul, tooth_number, partial_cone_angle, tooth_width, bore, pressure_angle = rad(20), helix_angle=0, tooth_step=16, flat_step=3):
@@ -190,7 +202,7 @@ def bevel_gear_assembly(modul, tooth_number, partial_cone_angle, tooth_width, bo
     i = 0
     while True:
         ans += triangulate_polyhedron(tooth_top)
-        ans += triangulate_polyhedron(tooth_bottom)
+        ans += triangulate_polyhedron(tooth_bottom, reverse=True)
         ans += triangulate_prism(tooth_top, tooth_bottom, open=True)
 
         if len(top_face) > 0:
@@ -224,9 +236,6 @@ def bevel_gear_assembly(modul, tooth_number, partial_cone_angle, tooth_width, bo
     top_face += top_line
     bottom_face += bottom_line
 
-    for p in bottom_face:
-        print(p[2])
-
     if bore == 0:
         ans += triangulate_polyhedron(top_face)
         ans += triangulate_polyhedron(bottom_face)
@@ -234,13 +243,15 @@ def bevel_gear_assembly(modul, tooth_number, partial_cone_angle, tooth_width, bo
     else:
         top_center = center(top_face)
 
-        top_bore = project(top_face, top_center, bore)
+        top_bore, bottom_bore = [], []
+        for k in range(len(top_face)):
+            top_bore.append((-cos(2*pi*k/len(top_face)), sin(2*pi*k/len(top_face)), top_face[k][2]))
+            bottom_bore.append((-cos(2*pi*k/len(top_face)), sin(2*pi*k/len(top_face)), bottom_face[k][2]))
 
         bottom_center = center(bottom_face)
-        bottom_bore = project(bottom_face, bottom_center, bore)
 
-        ans += triangulate_prism(top_face, top_bore, open=False)
-        ans += triangulate_prism(top_bore, bottom_bore, open=False)
+        ans += triangulate_prism(top_bore, top_face, open=False)
+        ans += triangulate_prism(bottom_bore, top_bore, open=False)
         ans += triangulate_prism(bottom_face, bottom_bore, open=False)
 
     return ans
