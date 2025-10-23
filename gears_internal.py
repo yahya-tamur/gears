@@ -1,3 +1,5 @@
+
+# try mpmath?
 from math import sin, cos, tan, atan, asin, acos, pi, sqrt
 
 # get two arrays of points (same length >= 3)
@@ -80,7 +82,10 @@ def rotate(a, l):
     
         l[i] = (x, y, z)
 
-
+def translate(a, l):
+    for i in range(len(l)):
+        x, y, z = l[i]
+        l[i] = x+a[0], y+a[1], z+a[2]
 
 # all angles are in RADIANS here!!!!
 
@@ -135,39 +140,44 @@ def bevel_gear_data(modul, tooth_number, partial_cone_angle, tooth_width, pressu
     #for rot in range(0, 2*pi, tau):
     # one tooth
 
-    tooth_top_from_left = []
-    tooth_top_from_right = []
-    tooth_bottom_from_left = []
-    tooth_bottom_from_right = []
+    tooth_nw = []
+    tooth_ne = []
+    tooth_sw = []
+    tooth_se = []
 
     if delta_b > delta_f:
         flankpoint_under = 1*mirrpoint
 
-        tooth_top_from_right.append(sph_to_cart((rg_outside, delta_f, flankpoint_under)))
-        tooth_bottom_from_right.append(sph_to_cart((rg_inside, delta_f, flankpoint_under+gamma)))
-        tooth_bottom_from_left.append(sph_to_cart((rg_inside, delta_f, mirrpoint-flankpoint_under+gamma)))
-        tooth_top_from_left.append(sph_to_cart((rg_outside, delta_f, mirrpoint-flankpoint_under)))
+        tooth_ne.append(sph_to_cart((rg_outside, delta_f, flankpoint_under)))
+        tooth_se.append(sph_to_cart((rg_inside, delta_f, flankpoint_under+gamma)))
+        tooth_sw.append(sph_to_cart((rg_inside, delta_f, mirrpoint-flankpoint_under+gamma)))
+        tooth_nw.append(sph_to_cart((rg_outside, delta_f, mirrpoint-flankpoint_under)))
 
     #for delta in range(start, delta_a, step):
     delta = start
     while delta < delta_a+(step/2):
         flankpoint_under = sphere_ev(delta_b, delta)
 
-        tooth_top_from_left.append(sph_to_cart((rg_outside, delta, flankpoint_under)))
-        tooth_bottom_from_left.append(sph_to_cart((rg_inside, delta, flankpoint_under+gamma)))
-        tooth_bottom_from_right.append(sph_to_cart((rg_inside, delta, mirrpoint-flankpoint_under+gamma)))
-        tooth_top_from_right.append(sph_to_cart((rg_outside, delta, mirrpoint-flankpoint_under)))
+        tooth_nw.append(sph_to_cart((rg_outside, delta, flankpoint_under)))
+        tooth_sw.append(sph_to_cart((rg_inside, delta, flankpoint_under+gamma)))
+        tooth_se.append(sph_to_cart((rg_inside, delta, mirrpoint-flankpoint_under+gamma)))
+        tooth_ne.append(sph_to_cart((rg_outside, delta, mirrpoint-flankpoint_under)))
 
         delta += step
 
-    return (tooth_top_from_left, tooth_top_from_right, tooth_bottom_from_left, tooth_bottom_from_right, tau)
+    for pt_list in (tooth_nw, tooth_ne, tooth_sw, tooth_se):
+        rotate([0,pi,0], pt_list)
+        translate([0,0,height_f], pt_list)
+        rotate([0,0,phi_r+pi/2*(1-clearance)/tooth_number], pt_list)
+
+    return (tooth_nw, tooth_ne, tooth_sw, tooth_se, tau)
 
 # do translation/rotation next
-def bevel_gear_assembly(modul, tooth_number, partial_cone_angle, tooth_width, bore, pressure_angle = rad(20), helix_angle=0, tooth_step=16, flat_step=10):
-    tooth_top_from_left, tooth_top_from_right, tooth_bottom_from_left, tooth_bottom_from_right, tau = bevel_gear_data(modul, tooth_number, partial_cone_angle, tooth_width, pressure_angle, helix_angle, tooth_step)
+def bevel_gear_assembly(modul, tooth_number, partial_cone_angle, tooth_width, bore, pressure_angle = rad(20), helix_angle=0, tooth_step=16, flat_step=3):
+    tooth_nw, tooth_ne, tooth_sw, tooth_se, tau = bevel_gear_data(modul, tooth_number, partial_cone_angle, tooth_width, pressure_angle, helix_angle, tooth_step)
 
-    tooth_top = tooth_top_from_left + interpolate_line(tooth_top_from_left[-1], tooth_top_from_right[-1], flat_step, endpoints=False) + tooth_top_from_right[::-1]
-    tooth_bottom = tooth_bottom_from_left + interpolate_line(tooth_bottom_from_left[-1], tooth_bottom_from_right[-1], flat_step, endpoints=False) + tooth_bottom_from_right[::-1]
+    tooth_top = tooth_nw + interpolate_line(tooth_nw[-1], tooth_ne[-1], flat_step, endpoints=False) + tooth_ne[::-1]
+    tooth_bottom = tooth_sw + interpolate_line(tooth_sw[-1], tooth_se[-1], flat_step, endpoints=False) + tooth_se[::-1]
 
     top_face, bottom_face = [], []
 
@@ -214,6 +224,9 @@ def bevel_gear_assembly(modul, tooth_number, partial_cone_angle, tooth_width, bo
     top_face += top_line
     bottom_face += bottom_line
 
+    for p in bottom_face:
+        print(p[2])
+
     if bore == 0:
         ans += triangulate_polyhedron(top_face)
         ans += triangulate_polyhedron(bottom_face)
@@ -229,8 +242,6 @@ def bevel_gear_assembly(modul, tooth_number, partial_cone_angle, tooth_width, bo
         ans += triangulate_prism(top_face, top_bore, open=False)
         ans += triangulate_prism(top_bore, bottom_bore, open=False)
         ans += triangulate_prism(bottom_face, bottom_bore, open=False)
-    #for i in range(1, len(top_face), 2):
-        #ans += triangulate_polyhedron
 
     return ans
 

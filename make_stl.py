@@ -8,7 +8,7 @@ import struct
 
 # This doesn't cause an issue in any program I've tried.
 # You can change this behavior to calculate a normal if one isn't provided,
-# However, it's hard to make sure the calculated points out, not in.
+# However, it's hard to make sure the calculated normal vector points out, not in.
 
 # Since I couldn't test to make sure every normal points out,
 # I decided to not calculate.
