@@ -185,7 +185,7 @@ def bevel_gear_data(modul, tooth_number, partial_cone_angle, tooth_width, pressu
     return (tooth_nw, tooth_ne, tooth_sw, tooth_se, -tau)
 
 # do translation/rotation next
-def bevel_gear_assembly(modul, tooth_number, partial_cone_angle, tooth_width, bore, pressure_angle = rad(20), helix_angle=0, tooth_step=16, flat_step=3):
+def bevel_gear_assembly(modul, tooth_number, partial_cone_angle, tooth_width, bore, pressure_angle, helix_angle, tooth_step, flat_step):
     tooth_nw, tooth_ne, tooth_sw, tooth_se, tau = bevel_gear_data(modul, tooth_number, partial_cone_angle, tooth_width, pressure_angle, helix_angle, tooth_step)
 
     tooth_top = tooth_nw + interpolate_line(tooth_nw[-1], tooth_ne[-1], flat_step, endpoints=False) + tooth_ne[::-1]
