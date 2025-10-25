@@ -1,21 +1,54 @@
 import struct
 
-# input = array of triangles
-# each triangle is three points or a normal vector, then 3 points.
+from math import sqrt # for normal vector
 
-# !! If no normal vector is provided, this program will set it to zero.
-# And I don't provide normal vectors for the gears.
+# The two functions below are included for convenience, make_stl can put any
+# array of triangles (optionally including a normal vector) into an stl file.
 
-# This doesn't cause an issue in any program I've tried.
-# You can change this behavior to calculate a normal if one isn't provided,
-# However, it's hard to make sure the calculated normal vector points out, not in.
 
-# Since I couldn't test to make sure every normal points out,
-# I decided to not calculate.
+# In case the direction of the normal matters, both functions below create a
+# consistent direction, which can reversed:
+# triangulate_polyhedron, using the 'reverse' argument, and
+# triangulate_prism, by exchanging the top and bottom arguments.
 
-# Something to look at if you have an issue.
+# This can be used to stitch together any two sequences of points, not just the
+# sides of a prism. 'closed' means the first and last points will be connected.
 
-from math import sqrt
+def triangulate_prism(top, bottom, closed=True):
+    ans = []
+
+    if closed:
+        ans.append([top[-1],bottom[-1], top[0]]) 
+        ans.append([top[0],bottom[-1], bottom[0]]) 
+
+    for i in range(len(top)-1):
+        ans.append([top[i], bottom[i], top[i+1]])
+        ans.append([top[i+1], bottom[i], bottom[i+1]])
+    return ans
+
+# All triangles have a common center, which, if not provided, is the first
+# element of the list.
+
+def triangulate_polyhedron(p, center=None, reverse=False):
+    start = 0
+    ans = []
+    if center is None:
+        center = p[0]
+        start = 1
+    else:
+        if reverse:
+            ans.append([center, p[0], p[-1]])
+        else:
+            ans.append([center, p[-1], p[0]])
+
+
+    for i in range(start, len(p)-1):
+        if reverse:
+            ans.append([center, p[i+1], p[i]])
+        else:
+            ans.append([center, p[i], p[i+1]])
+
+    return ans
 
 def normal(t):
     (x0, y0, z0), (x1, y1, z1), (x2, y2, z2) = t
@@ -27,7 +60,7 @@ def normal(t):
     
     n = sqrt(ans_x*ans_x + ans_y*ans_y + ans_z*ans_z)
 
-    return (ans_x / n, ans_y/n, ans_z/n)
+    return (ans_x/n, ans_y/n, ans_z/n)
 
 def make_stl(triangles, filename):
     with open(filename, 'wb') as f:

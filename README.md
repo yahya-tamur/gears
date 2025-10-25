@@ -1,28 +1,23 @@
 This is an effort to port the openscad code to a python script creating the stl
-directly. This creates a much simpler stl.
+directly. This creates a nicer stl file.
+
+You can look at `main.py` for example usage and the original README for
+explanations of all the variables. The `disp` function in `main.py` can be used
+in the python repl to iterate through different gear designs quickly: (You need
+some lightweight stl viewer, fstl by default)
+
+```
+from main import *
+from gears import *
+disp(bevel_gear(modul=1, tooth_number=20, partial_cone_angle=20, tooth_width=2, helix_angle=20))
+```
 
 to do:
 
-* write nice description
-* organize directory
-
-* look up copyright / usage 
-
-* make whole bevel gear (including translations, rotations)
-
-* make whole herringbone bevel gear
-
-* make herringbone bevel gear pair with assembly instructions
+* n/a
 
 nice to have:
 
-* polygons centered around center of gear (bore??)
+* go over numerical errors
 
-* clean up code
-
-* go over numerical stability
-
-* user interface
-
-* detail slider (increase 16)
-
+* port other gear designs?

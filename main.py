@@ -1,16 +1,25 @@
 from gears import bevel_gear
 from make_stl import make_stl
 
-from gears_internal import bevel_herringbone_gear_pair_assembly, rad
-
+from gears import *
 
 if __name__ == "__main__":
-    #gear = bevel_gear(modul=1, tooth_number=20, partial_cone_angle=20, bore=1, tooth_width=10, pressure_angle = 20, helix_angle=20);
-    gear = bevel_herringbone_gear_pair_assembly(modul=1, gear_teeth=20, pinion_teeth=35, axis_angle=rad(30), gear_bore=1, pinion_bore=1, tooth_width=10, pressure_angle = rad(20), helix_angle=rad(20), tooth_step=16, flat_step=10, together_built=True);
+    make_stl( \
+        bevel_gear(modul=1, tooth_number=20, partial_cone_angle=20, tooth_width=2, helix_angle=20), \
+        "comparison/bevel_gear.stl")
 
-    print(len(gear))
+    make_stl( \
+        bevel_herringbone_gear(modul=1, tooth_number=20, partial_cone_angle=20, tooth_width=10, helix_angle=20, bore=2), \
+        "comparison/bevel_herringbone_gear.stl")
 
-    make_stl(gear, "tooth.stl")
+    make_stl( \
+        bevel_gear_pair(modul=1, gear_teeth=12, pinion_teeth=7, axis_angle=100, tooth_width=3), 
+        "comparison/bevel_gear_pair.stl")
+
+    make_stl( \
+        bevel_herringbone_gear_pair(modul=2, gear_teeth=40, pinion_teeth=22, tooth_width=25, axis_angle=70, helix_angle=40), \
+        "comparison/bevel_herringbone_gear_pair.stl")
+
 
 import os
 

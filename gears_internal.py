@@ -1,6 +1,8 @@
 
 from math import sin, cos, tan, atan, asin, acos, pi, sqrt
 
+from make_stl import triangulate_polyhedron, triangulate_prism
+
 # later maybe??
 #from mpmath import mp
 #mp.dps = 500
@@ -13,36 +15,7 @@ from math import sin, cos, tan, atan, asin, acos, pi, sqrt
 #pi = mp.pi
 #sqrt = mp.sqrt
 
-# get two arrays of points (same length >= 3)
-# no top or bottom.
-def triangulate_prism(top, bottom, closed=True):
-    ans = []
-    
-
-    if closed:
-        ans.append([top[-1],bottom[-1], top[0]]) 
-        ans.append([top[0],bottom[-1], bottom[0]]) 
-
-    for i in range(len(top)-1):
-        ans.append([top[i], bottom[i], top[i+1]])
-        ans.append([top[i+1], bottom[i], bottom[i+1]])
-    return ans
-
-def triangulate_polyhedron(p, center=None, reverse=False):
-    start = 0
-    if center is None:
-        center = p[0]
-        start = 1
-
-    ans = []#[[center, p[-1], p[0]]]
-
-    for i in range(start, len(p)-1):
-        if reverse:
-            ans.append([center, p[i+1], p[i]])
-        else:
-            ans.append([center, p[i], p[i+1]])
-
-    return ans
+# all angles in this file are in radians.
 
 def interpolate_line(a, b, n, endpoints=True):
     ans = []
@@ -101,8 +74,6 @@ def translate(a, l):
         x, y, z = l[i]
         l[i] = x+a[0], y+a[1], z+a[2]
 
-# all angles are in RADIANS here!!!!
-
 def rad(t):
     return t/180*pi
 
@@ -117,18 +88,10 @@ def sph_to_cart(v):
     r, theta, phi = v
     return (r*sin(theta)*cos(phi), r*sin(theta)*sin(phi), r*cos(theta))
 
-
-def printline(prefix, line):
-    print(prefix, end='')
-
-    for (x, y, z) in line:
-        print('(%.2f %.2f %.2f)' % (x, y, z), end='')
-    print()
-
+clearance = 0.05
 
 def bevel_gear_data(modul, tooth_number, partial_cone_angle, tooth_width, pressure_angle, helix_angle, tooth_step):
 
-    clearance = 0.05
     d_outside = modul*tooth_number
     r_outside = d_outside / 2
     rg_outside = r_outside / sin(partial_cone_angle)
@@ -161,9 +124,6 @@ def bevel_gear_data(modul, tooth_number, partial_cone_angle, tooth_width, pressu
     tau = 2*pi/tooth_number
 
     mirrpoint = (pi*(1-clearance))/tooth_number+2*phi_r
-
-    #for rot in range(0, 2*pi, tau):
-    # one tooth
 
     tooth_nw = []
     tooth_ne = []
@@ -442,8 +402,8 @@ def bevel_gear_pair_assembly(modul, gear_teeth, pinion_teeth, axis_angle, tooth_
         for tri in gear_2:
             translate([rkf_pinion*2 + modul + rkf_gear, 0, 0], tri)
 
-    # you can have rotate and translate 
-    # take list slices and be able to optionally pass ans into bevel_gear
+    # you can have rotate and translate take list slices, not lists,
+    # and add the option to pass ans into bevel_gear
     # so you don't have to do this copy.
     return gear_1 + gear_2
 
