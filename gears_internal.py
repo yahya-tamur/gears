@@ -1,25 +1,25 @@
 
-# try mpmath?
-#from math import sin, cos, tan, atan, asin, acos, pi, sqrt
+from math import sin, cos, tan, atan, asin, acos, pi, sqrt
 
-from mpmath import mp
-mp.dps = 500
-sin = mp.sin
-cos = mp.cos
-tan = mp.tan
-atan = mp.atan
-asin = mp.asin
-acos = mp.acos
-pi = mp.pi
-sqrt = mp.sqrt
+# later maybe??
+#from mpmath import mp
+#mp.dps = 500
+#sin = mp.sin
+#cos = mp.cos
+#tan = mp.tan
+#atan = mp.atan
+#asin = mp.asin
+#acos = mp.acos
+#pi = mp.pi
+#sqrt = mp.sqrt
 
 # get two arrays of points (same length >= 3)
 # no top or bottom.
-def triangulate_prism(top, bottom, open=False):
+def triangulate_prism(top, bottom, closed=True):
     ans = []
     
 
-    if not open:
+    if closed:
         ans.append([top[-1],bottom[-1], top[0]]) 
         ans.append([top[0],bottom[-1], bottom[0]]) 
 
@@ -89,7 +89,7 @@ def rotate(a, l):
         x, y = x*cos(a[2]) - y*sin(a[2]), x*sin(a[2]) + y*cos(a[2])
 
         #rotate a[1] radians around y axis
-        x, z = x*cos(a[1]) - z*sin(a[1]), x*sin(a[1]) + z*cos(a[1])
+        z, x = z*cos(a[1]) - x*sin(a[1]), z*sin(a[1]) + x*cos(a[1])
 
         #rotate a[0] radians around x axis
         y, z = y*cos(a[0]) - z*sin(a[0]), y*sin(a[0]) + z*cos(a[0])
@@ -186,8 +186,8 @@ def bevel_gear_data(modul, tooth_number, partial_cone_angle, tooth_width, pressu
         step = (delta_a - delta_b)/tooth_step
 
     #for delta in range(start, delta_a, step):
-    delta = start
-    while delta < delta_a+(step/2):
+    for i in range(tooth_step+1):
+        delta = (start*(tooth_step - i) + delta_a*i) / tooth_step
         flankpoint_under = sphere_ev(delta_b, delta)
 
         tooth_nw.append(sph_to_cart((rg_outside, delta, flankpoint_under)))
@@ -195,7 +195,6 @@ def bevel_gear_data(modul, tooth_number, partial_cone_angle, tooth_width, pressu
         tooth_se.append(sph_to_cart((rg_inside, delta, mirrpoint-flankpoint_under+gamma)))
         tooth_ne.append(sph_to_cart((rg_outside, delta, mirrpoint-flankpoint_under)))
 
-        delta += step
 
     for pt_list in (tooth_nw, tooth_ne, tooth_sw, tooth_se):
         rotate([0,pi,0], pt_list)
@@ -221,12 +220,12 @@ def bevel_gear_assembly(modul, tooth_number, partial_cone_angle, tooth_width, bo
     while True:
         ans += triangulate_polyhedron(tooth_top)
         ans += triangulate_polyhedron(tooth_bottom, reverse=True)
-        ans += triangulate_prism(tooth_top, tooth_bottom, open=True)
+        ans += triangulate_prism(tooth_top, tooth_bottom, closed=False)
 
         if len(top_face) > 0:
             top_line = interpolate_line(top_face[-1], tooth_top[0], flat_step, endpoints=True)
             bottom_line = interpolate_line(bottom_face[-1], tooth_bottom[0], flat_step, endpoints=True)
-            ans += triangulate_prism(top_line, bottom_line, open=True)
+            ans += triangulate_prism(top_line, bottom_line, closed=False)
             top_face.pop()
             bottom_face.pop()
             top_face += top_line
@@ -245,7 +244,7 @@ def bevel_gear_assembly(modul, tooth_number, partial_cone_angle, tooth_width, bo
 
     top_line = interpolate_line(top_face[-1], top_face[0], flat_step, endpoints=True)
     bottom_line = interpolate_line(bottom_face[-1], bottom_face[0], flat_step, endpoints=True)
-    ans += triangulate_prism(top_line, bottom_line, open=True)
+    ans += triangulate_prism(top_line, bottom_line, closed=False)
 
     top_line.pop()
     bottom_line.pop()
@@ -259,7 +258,7 @@ def bevel_gear_assembly(modul, tooth_number, partial_cone_angle, tooth_width, bo
 
     if bore == 0:
         ans += triangulate_polyhedron(top_face, top_center)
-        ans += triangulate_polyhedron(bottom_face, top_center)
+        ans += triangulate_polyhedron(bottom_face, bottom_center)
 
     else:
         top_bore, bottom_bore = [], []
@@ -268,13 +267,13 @@ def bevel_gear_assembly(modul, tooth_number, partial_cone_angle, tooth_width, bo
             bottom_bore.append((-cos(2*pi*k/len(top_face)), sin(2*pi*k/len(top_face)), bottom_face[k][2]))
 
 
-        ans += triangulate_prism(top_bore, top_face, open=False)
-        ans += triangulate_prism(bottom_bore, top_bore, open=False)
-        ans += triangulate_prism(bottom_face, bottom_bore, open=False)
+        ans += triangulate_prism(top_bore, top_face, closed=True)
+        ans += triangulate_prism(bottom_bore, top_bore, closed=True)
+        ans += triangulate_prism(bottom_face, bottom_bore, closed=True)
 
     return ans
 
-def bevel_herringbone_gear_data(modul, tooth_number, partial_cone_angle, tooth_width, bore, pressure_angle, helix_angle, tooth_step):
+def bevel_herringbone_gear_data(modul, tooth_number, partial_cone_angle, tooth_width, pressure_angle, helix_angle, tooth_step):
 
     tooth_width = tooth_width / 2
     d_outside = modul * tooth_number
@@ -296,41 +295,197 @@ def bevel_herringbone_gear_data(modul, tooth_number, partial_cone_angle, tooth_w
 
     modul_inside = modul*(1-tooth_width/rg_outside)
     
-    lower_cone_angle = partial_cone_angle# - pi/180
+    # I think the -1 degree correction added here is a band-aid to the real issue
+    # of the gears not meshing.
+    # For now I address this by averaging the two different middle gears instead.
+    # Later I would like to try to address this differently:
+    # I think it's a math error, not due to floating points -- the mean square
+    # difference between the two gears didn't change at all when I tried using
+    # more precise floating points with mpmath.
 
-    # I was considering altering the bevel_gear_data program to be able to create
-    # the lower mesh only, but since it's O(tooth_step), which is 16 by default,
-    # it's really not necessary.
-    
+    lower_cone_angle = partial_cone_angle #- pi/180
 
     tooth_aw, tooth_ae, tooth_bw_upper, tooth_be_upper, tau = bevel_gear_data( \
             modul, tooth_number, lower_cone_angle, tooth_width, pressure_angle, helix_angle, tooth_step)
 
-    tooth_top = tooth_aw + tooth_ae[::-1]
-    print(len(tooth_top))
-
-    tooth_mid_upper = tooth_bw_upper + tooth_be_upper[::-1]
-
-
     tooth_bw_lower, tooth_be_lower, tooth_cw, tooth_ce, tau = bevel_gear_data( \
             modul_inside, tooth_number, partial_cone_angle, tooth_width, pressure_angle, -helix_angle, tooth_step)
 
-    tooth_mid_lower = tooth_bw_lower + tooth_be_lower[::-1]
-    tooth_bottom = tooth_cw + tooth_ce[::-1]
-
-    for pt_list in (tooth_mid_lower, tooth_bottom):
+    for pt_list in (tooth_bw_lower, tooth_be_lower, tooth_ce, tooth_cw):
         rotate([0, 0, -gamma], pt_list)
         translate([0, 0, height_f - height_fk], pt_list)
 
-    print(sum(norm(a[0]-b[0], a[1]-b[1], a[2]-b[2]) for (a,b) in zip(tooth_mid_upper, tooth_mid_lower))/len(tooth_mid_upper))
+    tooth_bw, tooth_be = [], []
+    for i in range(len(tooth_be_upper)):
+        tooth_bw.append(center((tooth_bw_upper[i], tooth_bw_lower[i])))
+        tooth_be.append(center((tooth_be_upper[i], tooth_be_lower[i])))
+
+    return tooth_aw, tooth_ae, tooth_bw, tooth_be, tooth_cw, tooth_ce, tau
+
+
+def bevel_herringbone_gear_assembly(modul, tooth_number, partial_cone_angle, tooth_width, bore, pressure_angle, helix_angle, tooth_step, flat_step):
+    tooth_aw, tooth_ae, tooth_bw, tooth_be, tooth_cw, tooth_ce, tau = bevel_herringbone_gear_data(modul, tooth_number, partial_cone_angle, tooth_width, pressure_angle, helix_angle, tooth_step)
+
+    tooth_a = tooth_aw + interpolate_line(tooth_aw[-1], tooth_ae[-1], flat_step, endpoints=False) + tooth_ae[::-1]
+    tooth_b = tooth_bw + interpolate_line(tooth_bw[-1], tooth_be[-1], flat_step, endpoints=False) + tooth_be[::-1]
+    tooth_c = tooth_cw + interpolate_line(tooth_cw[-1], tooth_ce[-1], flat_step, endpoints=False) + tooth_ce[::-1]
+
+    a_face, b_face, c_face = [], [], []
+
     ans = []
 
-    ans += triangulate_polyhedron(tooth_top)#tooth_ae[::-1])
-    ans += triangulate_polyhedron(tooth_mid_upper)# + tooth_be_upper[::-1])
-    ans += triangulate_prism(tooth_top, tooth_mid_upper, open=True)
-    ans += triangulate_polyhedron(tooth_mid_lower)# + tooth_be_lower[::-1])
-    ans += triangulate_polyhedron(tooth_bottom)# + tooth_ce[::-1])
-    ans += triangulate_prism(tooth_mid_lower, tooth_bottom, open=True)
+    # create top and bottom teeth faces, teeth open prisms
 
-    print(len(tooth_mid_upper), len(tooth_mid_lower))
+    i = 0
+    while True:
+        ans += triangulate_polyhedron(tooth_a)
+        ans += triangulate_polyhedron(tooth_c, reverse=True)
+        ans += triangulate_prism(tooth_a, tooth_b, closed=False)
+        ans += triangulate_prism(tooth_b, tooth_c, closed=False)
+
+        if len(a_face) > 0:
+            a_line = interpolate_line(a_face[-1], tooth_a[0], flat_step, endpoints=True)
+            b_line = interpolate_line(b_face[-1], tooth_b[0], flat_step, endpoints=True)
+            c_line = interpolate_line(c_face[-1], tooth_c[0], flat_step, endpoints=True)
+            ans += triangulate_prism(a_line, b_line, closed=False)
+            ans += triangulate_prism(b_line, c_line, closed=False)
+            a_face.pop()
+            b_face.pop()
+            c_face.pop()
+            a_face += a_line
+            b_face += b_line
+            c_face += c_line
+            a_face.append(tooth_a[-1])
+            b_face.append(tooth_b[-1])
+            c_face.append(tooth_c[-1])
+        else:
+            a_face = [tooth_a[0], tooth_a[-1]]
+            b_face = [tooth_b[0], tooth_b[-1]]
+            c_face = [tooth_c[0], tooth_c[-1]]
+
+        i += 1
+        if i == tooth_number:
+            break
+        rotate((0, 0, tau), tooth_a)
+        rotate((0, 0, tau), tooth_b)
+        rotate((0, 0, tau), tooth_c)
+
+    a_line = interpolate_line(a_face[-1], a_face[0], flat_step, endpoints=True)
+    b_line = interpolate_line(b_face[-1], b_face[0], flat_step, endpoints=True)
+    c_line = interpolate_line(c_face[-1], c_face[0], flat_step, endpoints=True)
+    ans += triangulate_prism(a_line, b_line, closed=False)
+    ans += triangulate_prism(b_line, c_line, closed=False)
+
+    a_line.pop()
+    c_line.pop()
+    a_face.pop()
+    c_face.pop()
+    a_face += a_line
+    c_face += c_line
+
+    a_center = center(a_face)
+    c_center = center(c_face)
+
+    if bore == 0:
+        ans += triangulate_polyhedron(a_face, a_center)
+        ans += triangulate_polyhedron(c_face, c_center)
+
+    else:
+        top_bore, bottom_bore = [], []
+        for k in range(len(a_face)):
+            top_bore.append((-cos(2*pi*k/len(a_face)), sin(2*pi*k/len(a_face)), a_face[k][2]))
+            bottom_bore.append((-cos(2*pi*k/len(a_face)), sin(2*pi*k/len(a_face)), c_face[k][2]))
+
+
+        ans += triangulate_prism(top_bore, a_face, closed=True)
+        ans += triangulate_prism(bottom_bore, top_bore, closed=True)
+        ans += triangulate_prism(c_face, bottom_bore, closed=True)
+
     return ans
+
+
+def bevel_gear_pair_assembly(modul, gear_teeth, pinion_teeth, axis_angle, tooth_width, gear_bore, pinion_bore, pressure_angle, helix_angle, together_built, tooth_step, flat_step):
+
+
+    r_gear = modul*gear_teeth/2
+    delta_gear = atan(sin(axis_angle)/(pinion_teeth/gear_teeth+cos(axis_angle)))
+    delta_pinion = atan(sin(axis_angle)/(gear_teeth/pinion_teeth+cos(axis_angle)))
+    rg = r_gear/sin(delta_gear)
+    c = modul / 6
+    df_pinion = 2*rg*delta_pinion - 2 * (modul + c)
+    rf_pinion = df_pinion / 2
+    delta_f_pinion = rf_pinion/(pi*rg) * pi
+    rkf_pinion = rg*sin(delta_f_pinion)
+    height_f_pinion = rg*cos(delta_f_pinion)
+
+    df_gear = 2*rg*delta_gear - 2 * (modul + c)
+    rf_gear = df_gear / 2
+    delta_f_gear = rf_gear/rg
+    rkf_gear = rg*sin(delta_f_gear)
+    height_f_gear = rg*cos(delta_f_gear)
+
+    gear_1 = bevel_gear_assembly(modul, gear_teeth, delta_gear, tooth_width, gear_bore, pressure_angle, helix_angle, tooth_step, flat_step)
+
+    if pinion_teeth % 2 == 0:
+        for tri in gear_1:
+            rotate([0, 0, pi*(1-clearance)/gear_teeth], tri)
+
+    gear_2 = bevel_gear_assembly(modul, pinion_teeth, delta_pinion, tooth_width, pinion_bore, pressure_angle, -helix_angle, tooth_step, flat_step)
+
+    if together_built:
+        for tri in gear_2:
+            rotate([0, axis_angle, 0], tri)
+            dx = -height_f_pinion*cos(pi/2-axis_angle)
+            dz = height_f_gear-height_f_pinion*sin(pi/2-axis_angle)
+            translate([dx, 0, dz], tri)
+    else:
+        for tri in gear_2:
+            translate([rkf_pinion*2 + modul + rkf_gear, 0, 0], tri)
+
+    # you can have rotate and translate 
+    # take list slices and be able to optionally pass ans into bevel_gear
+    # so you don't have to do this copy.
+    return gear_1 + gear_2
+
+def bevel_herringbone_gear_pair_assembly(modul, gear_teeth, pinion_teeth, axis_angle, tooth_width, gear_bore, pinion_bore, pressure_angle, helix_angle, together_built, tooth_step, flat_step):
+
+
+    r_gear = modul*gear_teeth/2
+    delta_gear = atan(sin(axis_angle)/(pinion_teeth/gear_teeth+cos(axis_angle)))
+    delta_pinion = atan(sin(axis_angle)/(gear_teeth/pinion_teeth+cos(axis_angle)))
+    rg = r_gear/sin(delta_gear)
+    c = modul / 6
+    df_pinion = rg*delta_pinion*2 - 2 * (modul + c)
+    rf_pinion = df_pinion / 2
+    delta_f_pinion = rf_pinion/rg
+    rkf_pinion = rg*sin(delta_f_pinion)
+    height_f_pinion = rg*cos(delta_f_pinion)
+
+    df_gear = 2*rg*delta_gear - 2 * (modul + c)
+    rf_gear = df_gear / 2
+
+    delta_f_gear = rf_gear/rg
+    rkf_gear = rg*sin(delta_f_gear)
+    height_f_gear = rg*cos(delta_f_gear)
+
+    gear_1 = bevel_herringbone_gear_assembly(modul, gear_teeth, delta_gear, tooth_width, gear_bore, pressure_angle, helix_angle, tooth_step, flat_step)
+    
+    gear_2 = bevel_herringbone_gear_assembly(modul, pinion_teeth, delta_pinion, tooth_width, pinion_bore, pressure_angle, -helix_angle, tooth_step, flat_step)
+
+
+    if pinion_teeth % 2 == 0:
+        for tri in gear_1:
+            rotate([0,0,pi*(1-clearance)/gear_teeth], tri)
+
+    if together_built:
+        for tri in gear_2:
+            rotate([0, axis_angle, 0], tri)
+            dx = -height_f_pinion*cos(pi/2-axis_angle)
+            dz = height_f_gear-height_f_pinion*sin(pi/2-axis_angle)
+            translate([dx, 0, dz], tri)
+    else:
+        for tri in gear_2:
+            translate([rkf_pinion*2 + modul + rkf_gear, 0, 0], tri)
+
+    return gear_1 + gear_2
+
