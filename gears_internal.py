@@ -217,8 +217,8 @@ def bevel_gear_assembly(modul, tooth_number, partial_cone_angle, tooth_width, bo
     bottom_center = center(bottom_face)
 
     if bore == 0:
-        ans += triangulate_polyhedron(top_face, top_center, reverse=True)
-        ans += triangulate_polyhedron(bottom_face, bottom_center)
+        ans += triangulate_polyhedron(top_face, top_center)
+        ans += triangulate_polyhedron(bottom_face, bottom_center, reverse=True)
 
     else:
         top_bore, bottom_bore = [], []
@@ -347,8 +347,8 @@ def bevel_herringbone_gear_assembly(modul, tooth_number, partial_cone_angle, too
     c_center = center(c_face)
 
     if bore == 0:
-        ans += triangulate_polyhedron(a_face, a_center, reverse=True)
-        ans += triangulate_polyhedron(c_face, c_center)
+        ans += triangulate_polyhedron(a_face, a_center)
+        ans += triangulate_polyhedron(c_face, c_center, reverse=True)
 
     else:
         top_bore, bottom_bore = [], []
