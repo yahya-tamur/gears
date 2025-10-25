@@ -1,6 +1,17 @@
 
 # try mpmath?
-from math import sin, cos, tan, atan, asin, acos, pi, sqrt
+#from math import sin, cos, tan, atan, asin, acos, pi, sqrt
+
+from mpmath import mp
+mp.dps = 500
+sin = mp.sin
+cos = mp.cos
+tan = mp.tan
+atan = mp.atan
+asin = mp.asin
+acos = mp.acos
+pi = mp.pi
+sqrt = mp.sqrt
 
 # get two arrays of points (same length >= 3)
 # no top or bottom.
@@ -53,14 +64,14 @@ def center(points):
         az += (z-az)/n
     return ax, ay, az
 
-def euclidean(x, y, z):
+def norm(x, y, z):
     return sqrt(x*x + y*y + z*z)
 
 def project(points, center, dist):
     cx, cy, cz = center
     ans = []
     for (x, y, z) in points:
-        v = euclidean(x-cx, y-cy, z-cz)
+        v = norm(x-cx, y-cy, z-cz)
         x_ = cx + dist*(x-cx)/v
         y_ = cy + dist*(y-cy)/v
         z_ = cz + dist*(z-cz)/v
@@ -124,29 +135,31 @@ def bevel_gear_data(modul, tooth_number, partial_cone_angle, tooth_width, pressu
     rg_inside = rg_outside - tooth_width
     r_inside = r_outside*rg_inside / rg_outside
     alpha_spur = atan(tan(pressure_angle)/cos(helix_angle))
-    delta_b = asin(cos(alpha_spur)*sin(partial_cone_angle))
     da_outside = d_outside + (modul * (2.2 if modul < 1 else 2)) * cos(partial_cone_angle)
     ra_outside = da_outside / 2
-    delta_a = asin(ra_outside/rg_outside)
     c = modul / 6
     df_outside = d_outside - (modul +c) * 2 * cos(partial_cone_angle)
     rf_outside = df_outside / 2
+    #rkf = rg_outside*sin(delta_f)
     delta_f = asin(rf_outside/rg_outside)
-    rkf = rg_outside*sin(delta_f)
+    delta_a = asin(ra_outside/rg_outside)
+    delta_b = asin(cos(alpha_spur)*sin(partial_cone_angle))
+
     height_f = rg_outside*cos(delta_f)
+
     height_k = (rg_outside-tooth_width)/cos(partial_cone_angle)
     rk = (rg_outside-tooth_width)/sin(partial_cone_angle)
-    rfk = rk*height_k*tan(delta_f)/(rk+height_k*tan(delta_f))
-    height_fk = rk*height_k/(height_k*tan(delta_f)+rk)
+    #rfk = rk*height_k*tan(delta_f)/(rk+height_k*tan(delta_f))
+    #height_fk = rk*height_k/(height_k*tan(delta_f)+rk)
+
+
     phi_r = sphere_ev(delta_b, partial_cone_angle)
 
     gamma_g = 2*atan(tooth_width*tan(helix_angle)/(2*rg_outside-tooth_width))
     gamma = 2*asin(rg_outside/r_outside*sin(gamma_g/2))
 
-    step = (delta_a - delta_b)/tooth_step
     tau = 2*pi/tooth_number
 
-    start = delta_b if (delta_b > delta_f) else delta_f
     mirrpoint = (pi*(1-clearance))/tooth_number+2*phi_r
 
     #for rot in range(0, 2*pi, tau):
@@ -157,6 +170,10 @@ def bevel_gear_data(modul, tooth_number, partial_cone_angle, tooth_width, pressu
     tooth_sw = []
     tooth_se = []
 
+
+
+    start = delta_f
+    step = (delta_a - delta_f)/tooth_step # check if this is good
     if delta_b > delta_f:
         flankpoint_under = 1*mirrpoint
 
@@ -164,6 +181,9 @@ def bevel_gear_data(modul, tooth_number, partial_cone_angle, tooth_width, pressu
         tooth_se.append(sph_to_cart((rg_inside, delta_f, flankpoint_under+gamma)))
         tooth_sw.append(sph_to_cart((rg_inside, delta_f, mirrpoint-flankpoint_under+gamma)))
         tooth_nw.append(sph_to_cart((rg_outside, delta_f, mirrpoint-flankpoint_under)))
+
+        start = delta_b
+        step = (delta_a - delta_b)/tooth_step
 
     #for delta in range(start, delta_a, step):
     delta = start
@@ -196,8 +216,6 @@ def bevel_gear_assembly(modul, tooth_number, partial_cone_angle, tooth_width, bo
     ans = []
 
     # create top and bottom teeth faces, teeth open prisms
-
-
 
     i = 0
     while True:
@@ -236,19 +254,19 @@ def bevel_gear_assembly(modul, tooth_number, partial_cone_angle, tooth_width, bo
     top_face += top_line
     bottom_face += bottom_line
 
+    top_center = center(top_face)
+    bottom_center = center(bottom_face)
+
     if bore == 0:
-        ans += triangulate_polyhedron(top_face)
-        ans += triangulate_polyhedron(bottom_face)
+        ans += triangulate_polyhedron(top_face, top_center)
+        ans += triangulate_polyhedron(bottom_face, top_center)
 
     else:
-        top_center = center(top_face)
-
         top_bore, bottom_bore = [], []
         for k in range(len(top_face)):
             top_bore.append((-cos(2*pi*k/len(top_face)), sin(2*pi*k/len(top_face)), top_face[k][2]))
             bottom_bore.append((-cos(2*pi*k/len(top_face)), sin(2*pi*k/len(top_face)), bottom_face[k][2]))
 
-        bottom_center = center(bottom_face)
 
         ans += triangulate_prism(top_bore, top_face, open=False)
         ans += triangulate_prism(bottom_bore, top_bore, open=False)
@@ -256,5 +274,63 @@ def bevel_gear_assembly(modul, tooth_number, partial_cone_angle, tooth_width, bo
 
     return ans
 
+def bevel_herringbone_gear_data(modul, tooth_number, partial_cone_angle, tooth_width, bore, pressure_angle, helix_angle, tooth_step):
+
+    tooth_width = tooth_width / 2
+    d_outside = modul * tooth_number
+    r_outside = d_outside / 2
+    rg_outside = r_outside/sin(partial_cone_angle)
+    c = modul / 6
+    df_outside = d_outside - (modul +c) * 2 * cos(partial_cone_angle)
+    rf_outside = df_outside / 2
+    delta_f = asin(rf_outside/rg_outside)
+    height_f = rg_outside*cos(delta_f)
+
+    gamma_g = 2*atan(tooth_width*tan(helix_angle)/(2*rg_outside-tooth_width))
+    gamma = 2*asin(rg_outside/r_outside*sin(gamma_g/2))
+
+    height_k = (rg_outside-tooth_width)/cos(partial_cone_angle)
+    rk = (rg_outside-tooth_width)/sin(partial_cone_angle)
+    rfk = rk*height_k*tan(delta_f)/(rk+height_k*tan(delta_f))
+    height_fk = rk*height_k/(height_k*tan(delta_f)+rk)
+
+    modul_inside = modul*(1-tooth_width/rg_outside)
+    
+    lower_cone_angle = partial_cone_angle# - pi/180
+
+    # I was considering altering the bevel_gear_data program to be able to create
+    # the lower mesh only, but since it's O(tooth_step), which is 16 by default,
+    # it's really not necessary.
+    
+
+    tooth_aw, tooth_ae, tooth_bw_upper, tooth_be_upper, tau = bevel_gear_data( \
+            modul, tooth_number, lower_cone_angle, tooth_width, pressure_angle, helix_angle, tooth_step)
+
+    tooth_top = tooth_aw + tooth_ae[::-1]
+    print(len(tooth_top))
+
+    tooth_mid_upper = tooth_bw_upper + tooth_be_upper[::-1]
 
 
+    tooth_bw_lower, tooth_be_lower, tooth_cw, tooth_ce, tau = bevel_gear_data( \
+            modul_inside, tooth_number, partial_cone_angle, tooth_width, pressure_angle, -helix_angle, tooth_step)
+
+    tooth_mid_lower = tooth_bw_lower + tooth_be_lower[::-1]
+    tooth_bottom = tooth_cw + tooth_ce[::-1]
+
+    for pt_list in (tooth_mid_lower, tooth_bottom):
+        rotate([0, 0, -gamma], pt_list)
+        translate([0, 0, height_f - height_fk], pt_list)
+
+    print(sum(norm(a[0]-b[0], a[1]-b[1], a[2]-b[2]) for (a,b) in zip(tooth_mid_upper, tooth_mid_lower))/len(tooth_mid_upper))
+    ans = []
+
+    ans += triangulate_polyhedron(tooth_top)#tooth_ae[::-1])
+    ans += triangulate_polyhedron(tooth_mid_upper)# + tooth_be_upper[::-1])
+    ans += triangulate_prism(tooth_top, tooth_mid_upper, open=True)
+    ans += triangulate_polyhedron(tooth_mid_lower)# + tooth_be_lower[::-1])
+    ans += triangulate_polyhedron(tooth_bottom)# + tooth_ce[::-1])
+    ans += triangulate_prism(tooth_mid_lower, tooth_bottom, open=True)
+
+    print(len(tooth_mid_upper), len(tooth_mid_lower))
+    return ans
