@@ -235,6 +235,15 @@ def bevel_gear_assembly(modul, tooth_number, partial_cone_angle, tooth_width, bo
 
 def bevel_herringbone_gear_data(modul, tooth_number, partial_cone_angle, tooth_width, pressure_angle, helix_angle, tooth_step):
 
+    flatten = False
+
+    if partial_cone_angle == 0:
+        flatten = True
+        # since the original calculations are in spherical coordinates,
+        # I couldn't easily accomodate for this case.
+        # This value isn't too small for numerical accuracy.
+        partial_cone_angle = 0.00001
+
     tooth_width = tooth_width / 2
     d_outside = modul * tooth_number
     r_outside = d_outside / 2
@@ -279,6 +288,21 @@ def bevel_herringbone_gear_data(modul, tooth_number, partial_cone_angle, tooth_w
     for i in range(len(tooth_be_upper)):
         tooth_bw.append(center((tooth_bw_upper[i], tooth_bw_lower[i])))
         tooth_be.append(center((tooth_be_upper[i], tooth_be_lower[i])))
+
+
+    if flatten:
+        for i in range(len(tooth_aw)):
+            tooth_aw[i] = (tooth_aw[i][0], tooth_aw[i][1], 0)
+        for i in range(len(tooth_ae)):
+            tooth_ae[i] = (tooth_ae[i][0], tooth_ae[i][1], 0)
+        for i in range(len(tooth_bw)):
+            tooth_bw[i] = (tooth_bw[i][0], tooth_bw[i][1], tooth_width)
+        for i in range(len(tooth_be)):
+            tooth_be[i] = (tooth_be[i][0], tooth_be[i][1], tooth_width)
+        for i in range(len(tooth_cw)):
+            tooth_cw[i] = (tooth_cw[i][0], tooth_cw[i][1], tooth_width*2)
+        for i in range(len(tooth_ce)):
+            tooth_ce[i] = (tooth_ce[i][0], tooth_ce[i][1], tooth_width*2)
 
     return tooth_aw, tooth_ae, tooth_bw, tooth_be, tooth_cw, tooth_ce, tau
 
@@ -409,43 +433,60 @@ def bevel_gear_pair_assembly(modul, gear_teeth, pinion_teeth, axis_angle, tooth_
 
 def bevel_herringbone_gear_pair_assembly(modul, gear_teeth, pinion_teeth, axis_angle, tooth_width, gear_bore, pinion_bore, pressure_angle, helix_angle, together_built, tooth_step, flat_step):
 
+    if axis_angle == 0:
+        gear_1 = bevel_herringbone_gear_assembly(modul, gear_teeth, 0, tooth_width, gear_bore, pressure_angle, helix_angle, tooth_step, flat_step)
+        gear_2 = bevel_herringbone_gear_assembly(modul, pinion_teeth, 0, tooth_width, pinion_bore, pressure_angle, -helix_angle, tooth_step, flat_step)
 
-    r_gear = modul*gear_teeth/2
-    delta_gear = atan(sin(axis_angle)/(pinion_teeth/gear_teeth+cos(axis_angle)))
-    delta_pinion = atan(sin(axis_angle)/(gear_teeth/pinion_teeth+cos(axis_angle)))
-    rg = r_gear/sin(delta_gear)
-    c = modul / 6
-    df_pinion = rg*delta_pinion*2 - 2 * (modul + c)
-    rf_pinion = df_pinion / 2
-    delta_f_pinion = rf_pinion/rg
-    rkf_pinion = rg*sin(delta_f_pinion)
-    height_f_pinion = rg*cos(delta_f_pinion)
-
-    df_gear = 2*rg*delta_gear - 2 * (modul + c)
-    rf_gear = df_gear / 2
-
-    delta_f_gear = rf_gear/rg
-    rkf_gear = rg*sin(delta_f_gear)
-    height_f_gear = rg*cos(delta_f_gear)
-
-    gear_1 = bevel_herringbone_gear_assembly(modul, gear_teeth, delta_gear, tooth_width, gear_bore, pressure_angle, helix_angle, tooth_step, flat_step)
-    
-    gear_2 = bevel_herringbone_gear_assembly(modul, pinion_teeth, delta_pinion, tooth_width, pinion_bore, pressure_angle, -helix_angle, tooth_step, flat_step)
+        if pinion_teeth % 2 == 0:
+            for tri in gear_1:
+                rotate([0,0,pi*(1-clearance)/gear_teeth], tri)
 
 
-    if pinion_teeth % 2 == 0:
-        for tri in gear_1:
-            rotate([0,0,pi*(1-clearance)/gear_teeth], tri)
+        if together_built:
+            for tri in gear_2:
+                dx = -(pinion_teeth + gear_teeth)*modul/2
+                translate([dx, 0, 0], tri)
+        else:
+            for tri in gear_2:
+                translate([modul*(pinion_teeth + gear_teeth/2 - 2.5), 0, 0], tri)
 
-    if together_built:
-        for tri in gear_2:
-            rotate([0, axis_angle, 0], tri)
-            dx = -height_f_pinion*cos(pi/2-axis_angle)
-            dz = height_f_gear-height_f_pinion*sin(pi/2-axis_angle)
-            translate([dx, 0, dz], tri)
     else:
-        for tri in gear_2:
-            translate([rkf_pinion*2 + modul + rkf_gear, 0, 0], tri)
+        r_gear = modul*gear_teeth/2
+        delta_gear = atan(sin(axis_angle)/(pinion_teeth/gear_teeth+cos(axis_angle)))
+        delta_pinion = atan(sin(axis_angle)/(gear_teeth/pinion_teeth+cos(axis_angle)))
+        rg = r_gear/sin(delta_gear)
+        c = modul / 6
+        df_pinion = rg*delta_pinion*2 - 2 * (modul + c)
+        rf_pinion = df_pinion / 2
+        delta_f_pinion = rf_pinion/rg
+        rkf_pinion = rg*sin(delta_f_pinion)
+        height_f_pinion = rg*cos(delta_f_pinion)
+
+        df_gear = 2*rg*delta_gear - 2 * (modul + c)
+        rf_gear = df_gear / 2
+
+        delta_f_gear = rf_gear/rg
+        rkf_gear = rg*sin(delta_f_gear)
+        height_f_gear = rg*cos(delta_f_gear)
+
+        gear_1 = bevel_herringbone_gear_assembly(modul, gear_teeth, delta_gear, tooth_width, gear_bore, pressure_angle, helix_angle, tooth_step, flat_step)
+        
+        gear_2 = bevel_herringbone_gear_assembly(modul, pinion_teeth, delta_pinion, tooth_width, pinion_bore, pressure_angle, -helix_angle, tooth_step, flat_step)
+
+        if pinion_teeth % 2 == 0:
+            for tri in gear_1:
+                rotate([0,0,pi*(1-clearance)/gear_teeth], tri)
+
+        if together_built:
+            for tri in gear_2:
+                rotate([0, axis_angle, 0], tri)
+                dx = -height_f_pinion*cos(pi/2-axis_angle)
+                dz = height_f_gear-height_f_pinion*sin(pi/2-axis_angle)
+                translate([dx, 0, dz], tri)
+        else:
+            for tri in gear_2:
+                translate([rkf_pinion*2 + modul + rkf_gear, 0, 0], tri)
+    
 
     return gear_1 + gear_2
 

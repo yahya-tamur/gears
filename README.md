@@ -1,16 +1,18 @@
 This is an effort to port the openscad code to a python script creating the stl
-directly. This creates a nicer stl file.
+directly. This creates a nicer stl file. See the comparison folder.
 
-You can look at `main.py` for example usage and the original README for
-explanations of all the variables. The `disp` function in `main.py` can be used
-in the python repl to iterate through different gear designs quickly: (You need
-some lightweight stl viewer, fstl by default)
+The openscad version goes through several stages of turning the mathemetical
+formulas into sets of rectangular blocks, trying to union and subtract them,
+etc. This program, by comparison calculates vertexc placements and saves them
+in an stl file.
 
-```
-from main import *
-from gears import *
-disp(bevel_gear(modul=1, tooth_number=20, partial_cone_angle=20, tooth_width=2, helix_angle=20))
-```
+So, the improvement is that there are fewer jagged corners, edges, gears sticking
+together. It's easier to combine faces in 3d modeling software.
+
+The easiest way to use this program is by clicking on `run_gui.bat`. This runs
+the tkinter script `gui.py`, pictured below. Errors will show up on the terminal window.
+`gears.py` creates lists of 3d points and provides a nicer api than `gears_internal.py`.
+`make_stl.py` puts those lists in an stl file. `main.py` has the code to generate the examples.
 
 to do:
 
@@ -19,5 +21,6 @@ to do:
 nice to have:
 
 * go over numerical errors
-
+* tkinter gui for the other three functions?
 * port other gear designs?
+* especially ring gear!

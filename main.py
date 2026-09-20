@@ -1,9 +1,11 @@
 from gears import bevel_gear
 from make_stl import make_stl
 
+import os
+
 from gears import *
 
-if __name__ == "__main__":
+def make_comparison():
     make_stl( \
         bevel_gear(modul=1, tooth_number=20, partial_cone_angle=20, tooth_width=2, helix_angle=20), \
         "comparison/bevel_gear.stl")
@@ -20,9 +22,11 @@ if __name__ == "__main__":
         bevel_herringbone_gear_pair(modul=2, gear_teeth=40, pinion_teeth=22, tooth_width=25, axis_angle=70, helix_angle=40), \
         "comparison/bevel_herringbone_gear_pair.stl")
 
-
-import os
+# might be useful from cli
 
 def disp(mesh, viewer="fstl", filename="a.stl"):
     make_stl(mesh, filename)
     os.system(f"{viewer} {filename}")
+
+if __name__ == "__main__":
+    make_comparison()
