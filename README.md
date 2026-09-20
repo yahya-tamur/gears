@@ -14,6 +14,8 @@ the tkinter script `gui.py`, pictured below. Errors will show up on the terminal
 `gears.py` creates lists of 3d points and provides a nicer api than `gears_internal.py`.
 `make_stl.py` puts those lists in an stl file. `main.py` has the code to generate the examples.
 
+![screenshot](./screenshot.png)
+
 to do:
 
 * n/a
