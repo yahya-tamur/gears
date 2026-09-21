@@ -1,14 +1,16 @@
-from tkinter import *
-from tkinter import ttk, font
+#!/bin/python
+from tkinter import Tk, ttk, font, filedialog
+import subprocess
+from gears import bevel_herringbone_gear_pair
+from make_stl import make_stl
 
-from tkinter import filedialog
 
 root = Tk()
 
 # 1. Fetch all default Tkinter fonts and update their sizes
 default_font = font.nametofont("TkDefaultFont")  # Used for Labels, Buttons, etc.
-text_font = font.nametofont("TkTextFont")        # Used for Entry, Text widgets
-menu_font = font.nametofont("TkMenuFont")        # Used for Menus
+text_font = font.nametofont("TkTextFont")  # Used for Entry, Text widgets
+menu_font = font.nametofont("TkMenuFont")  # Used for Menus
 
 # 2. Configure a new larger size (e.g., 16)
 for f in (default_font, text_font, menu_font):
@@ -18,7 +20,9 @@ for f in (default_font, text_font, menu_font):
 frm = ttk.Frame(root, padding=10)
 frm.grid()
 
-ttk.Label(frm, text="Bevel Herringbone Gear Pair Generator").grid(column=0, row=0, columnspan=2, sticky="ew")
+ttk.Label(frm, text="Bevel Herringbone Gear Pair Generator").grid(
+    column=0, row=0, columnspan=2, sticky="ew"
+)
 frm.grid_columnconfigure(0, minsize=300)
 
 filename = "./a.stl"
@@ -26,29 +30,30 @@ filename = "./a.stl"
 filename_label = ttk.Label(frm, text=filename)
 filename_label.grid(column=1, row=1)
 
+
 def pick_file():
     # Hide the main Tkinter root window if you only want the dialog
-    # root.withdraw() 
+    # root.withdraw()
     global filename
-    
+
     new_filename = filedialog.asksaveasfilename(
         title="Save As",
         initialfile="a.stl",
         initialdir=".",
-        filetypes=(
-            ("Stl File", "*.stl"),
-        )
+        filetypes=(("Stl File", "*.stl"),),
     )
-    
+
     if new_filename:
         filename_label.config(text=new_filename)
         filename = new_filename
     else:
         print("No file was selected.")
 
-ttk.Button(frm, text="Save As", command=pick_file).grid(column=0,row=1)
+
+ttk.Button(frm, text="Save As", command=pick_file).grid(column=0, row=1)
 
 line = 2
+
 
 def make_entry(text, default):
     global line
@@ -74,37 +79,43 @@ get_together_built = make_entry("Build Together", "True")
 get_tooth_step = make_entry("Tooth Step", 16)
 get_flat_step = make_entry("Flat Step", 10)
 
-import subprocess
-from gears import *
-from make_stl import make_stl
+
+def string_to_bool(s):
+    if s.lower() in ("true", "t"):
+        return True
+    if s.lower() in ("false", "f"):
+        return False
+    raise ValueError(f"Invalid boolean value: {s}")
+
+
 def create(open_viewer=True):
     global filename
 
-    mesh = bevel_herringbone_gear_pair( \
-        modul = float(get_modul()), \
-        gear_teeth = int(get_gear_teeth()), \
-        pinion_teeth = int(get_pinion_teeth()), \
-        tooth_width = float(get_tooth_width()), \
-        axis_angle = float(get_axis_angle()), \
-        gear_bore = float(get_gear_bore()), \
-        pinion_bore = float(get_pinion_bore()), \
-        pressure_angle = float(get_pressure_angle()), \
-        helix_angle = float(get_helix_angle()), \
-        together_built = get_together_built().lower() in ("true", "t"), \
-        tooth_step = int(get_tooth_step()), \
-        flat_step = int(get_flat_step()), \
+    mesh = bevel_herringbone_gear_pair(
+        modul=float(get_modul()),
+        gear_teeth=int(get_gear_teeth()),
+        pinion_teeth=int(get_pinion_teeth()),
+        tooth_width=float(get_tooth_width()),
+        axis_angle=float(get_axis_angle()),
+        gear_bore=float(get_gear_bore()),
+        pinion_bore=float(get_pinion_bore()),
+        pressure_angle=float(get_pressure_angle()),
+        helix_angle=float(get_helix_angle()),
+        together_built=string_to_bool(get_together_built()),
+        tooth_step=int(get_tooth_step()),
+        flat_step=int(get_flat_step()),
     )
     viewer = get_viewer()
     make_stl(mesh, filename)
     if open_viewer:
         subprocess.Popen([viewer, filename])
 
+
 def update():
     create(open_viewer=False)
+
 
 ttk.Button(frm, text="Create", command=create).grid(column=0, row=line, sticky="ew")
 ttk.Button(frm, text="Update", command=update).grid(column=1, row=line, sticky="ew")
 
-#ttk.Button(frm, text="Quit", command=root.destroy).grid(column=1, row=0)
 root.mainloop()
-input()
