@@ -39,22 +39,6 @@ def center(points):
     return ax, ay, az
 
 
-def norm(x, y, z):
-    return sqrt(x * x + y * y + z * z)
-
-
-def project(points, center, dist):
-    cx, cy, cz = center
-    ans = []
-    for x, y, z in points:
-        v = norm(x - cx, y - cy, z - cz)
-        x_ = cx + dist * (x - cx) / v
-        y_ = cy + dist * (y - cy) / v
-        z_ = cz + dist * (z - cz) / v
-        ans.append((x_, y_, z_))
-    return ans
-
-
 # same behavior as openscad rotate(a=...) but rotates a list of points
 def rotate(a, pointlist):
 
