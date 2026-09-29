@@ -3,13 +3,18 @@
 
 # the main functionality is providing default values and converting degrees to radians.
 
-from gears_internal import (
-    rad,
+import os
+
+from .gears import (
     bevel_gear_assembly,
     bevel_herringbone_gear_assembly,
     bevel_gear_pair_assembly,
     bevel_herringbone_gear_pair_assembly,
 )
+
+from .math import rad
+
+from .make_stl import make_stl
 
 
 def bevel_gear(
@@ -118,3 +123,11 @@ def bevel_herringbone_gear_pair(
         tooth_step,
         flat_step,
     )
+
+
+# might be useful from cli
+
+
+def disp(mesh, viewer="fstl", filename="a.stl"):
+    make_stl(mesh, filename)
+    os.system(f"{viewer} {filename}")

@@ -1,8 +1,8 @@
 #!/bin/python
 from tkinter import Tk, ttk, font, filedialog
 import subprocess
-from gears import bevel_herringbone_gear_pair
-from make_stl import make_stl
+from .lib import bevel_herringbone_gear_pair
+from .make_stl import make_stl
 
 
 root = Tk()

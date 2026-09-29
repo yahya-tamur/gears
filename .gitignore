@@ -1,4 +1,5 @@
 *.geany
 *.stl
-__pycache__/*
+**/__pycache__/
 *.out
+.ruff_cache/**/*

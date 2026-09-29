@@ -1,3 +1,3 @@
 #!/bin/bash
 
-kitty -e python ./gui.py
+kitty -e python -m src.gui

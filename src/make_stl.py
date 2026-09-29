@@ -1,6 +1,7 @@
 import struct
 
 from math import sqrt  # for normal vector
+from .math import center
 
 # The two functions below are included for convenience, make_stl can put any
 # array of triangles (optionally including a normal vector) into an stl file.
@@ -15,40 +16,40 @@ from math import sqrt  # for normal vector
 # sides of a prism. 'closed' means the first and last points will be connected.
 
 
-def triangulate_prism(top, bottom, closed=True):
+def triangulate_prism(top, bottom, closed=True, make_center=True):
     ans = []
 
     if closed:
-        ans.append([top[-1], bottom[-1], top[0]])
-        ans.append([top[0], bottom[-1], bottom[0]])
+        ans += triangulate_polyhedron(
+            [top[-1], top[0], bottom[0], bottom[-1]], make_center
+        )
 
     for i in range(len(top) - 1):
-        ans.append([top[i], bottom[i], top[i + 1]])
-        ans.append([top[i + 1], bottom[i], bottom[i + 1]])
+        ans += triangulate_polyhedron(
+            [top[i], top[i + 1], bottom[i + 1], bottom[i]], make_center
+        )
+
     return ans
 
 
-# All triangles have a common center, which, if not provided, is the first
-# element of the list.
+# All triangles have a common center. If center=False, this is the first
+# element of the list. Else, this is calculated.
 
 
-def triangulate_polyhedron(p, center=None, reverse=False):
-    start = 0
-    ans = []
-    if center is None:
-        center = p[0]
-        start = 1
+def triangulate_polyhedron(p, reverse=False):
+
+    center_point = center(p)
+
+    if reverse:
+        ans = [[center_point, p[0], p[-1]]]
     else:
-        if reverse:
-            ans.append([center, p[0], p[-1]])
-        else:
-            ans.append([center, p[-1], p[0]])
+        ans = [[center_point, p[-1], p[0]]]
 
-    for i in range(start, len(p) - 1):
+    for i in range(0, len(p) - 1):
         if reverse:
-            ans.append([center, p[i + 1], p[i]])
+            ans.append([center_point, p[i + 1], p[i]])
         else:
-            ans.append([center, p[i], p[i + 1]])
+            ans.append([center_point, p[i], p[i + 1]])
 
     return ans
 
