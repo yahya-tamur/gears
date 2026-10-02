@@ -77,7 +77,6 @@ get_pressure_angle = make_entry("Pressure Angle", 20)
 get_helix_angle = make_entry("Helix Angle", 40)
 get_together_built = make_entry("Build Together", "True")
 get_tooth_step = make_entry("Tooth Step", 16)
-get_flat_step = make_entry("Flat Step", 10)
 
 
 def string_to_bool(s):
@@ -103,7 +102,6 @@ def create(open_viewer=True):
         helix_angle=float(get_helix_angle()),
         together_built=string_to_bool(get_together_built()),
         tooth_step=int(get_tooth_step()),
-        flat_step=int(get_flat_step()),
     )
     viewer = get_viewer()
     make_stl(mesh, filename)

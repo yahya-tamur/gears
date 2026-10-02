@@ -7,7 +7,7 @@ etc. This program, by comparison calculates vertexc placements and saves them
 in an stl file.
 
 So, the improvement is that there are fewer jagged corners, edges, gears sticking
-together. It's easier to combine faces in 3d modeling software.
+together. It's easier to work with in 3d modeling software.
 
 The easiest way to use this program is by clicking on `run_gui.bat`. This runs
 the tkinter script `gui.py`, pictured below. Errors will show up on the terminal window.
@@ -18,11 +18,16 @@ the tkinter script `gui.py`, pictured below. Errors will show up on the terminal
 
 to do:
 
-* n/a
+* go over examples
+* planetary gear
+    - there's a bug to fix in original!
+    - gui
 
 nice to have:
+* better comparison with openscad versions
 
-* go over numerical errors
+* I adapted bevel gears which use spherical coordinates to make flat gears (called spur
+    gears in original), but the library contains math to do this using polar instead of spherical coordinates. So, I should probably port that code instead.
 * tkinter gui for the other three functions?
 * port other gear designs?
 * especially ring gear!

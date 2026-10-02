@@ -26,7 +26,6 @@ def bevel_gear(
     pressure_angle=20,
     helix_angle=0,
     tooth_step=16,
-    flat_step=10,
 ):
     return bevel_gear_assembly(
         modul,
@@ -37,7 +36,6 @@ def bevel_gear(
         rad(pressure_angle),
         rad(helix_angle),
         tooth_step,
-        flat_step,
     )
 
 
@@ -50,7 +48,6 @@ def bevel_herringbone_gear(
     pressure_angle=20,
     helix_angle=10,
     tooth_step=16,
-    flat_step=10,
 ):
     return bevel_herringbone_gear_assembly(
         modul,
@@ -61,7 +58,6 @@ def bevel_herringbone_gear(
         rad(pressure_angle),
         rad(helix_angle),
         tooth_step,
-        flat_step,
     )
 
 
@@ -77,7 +73,6 @@ def bevel_gear_pair(
     helix_angle=0,
     together_built=True,
     tooth_step=16,
-    flat_step=10,
 ):
     return bevel_gear_pair_assembly(
         modul,
@@ -91,7 +86,6 @@ def bevel_gear_pair(
         rad(helix_angle),
         together_built,
         tooth_step,
-        flat_step,
     )
 
 
@@ -107,7 +101,6 @@ def bevel_herringbone_gear_pair(
     helix_angle=10,
     together_built=True,
     tooth_step=16,
-    flat_step=10,
 ):
     return bevel_herringbone_gear_pair_assembly(
         modul,
@@ -121,7 +114,6 @@ def bevel_herringbone_gear_pair(
         rad(helix_angle),
         together_built,
         tooth_step,
-        flat_step,
     )
 
 

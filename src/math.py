@@ -54,6 +54,8 @@ def rad(t):
 def deg(t):
     return t / pi * 180
 
+def polar_ev(r,rho):
+    return (r/cos(rho), tan(rho)-rho)
 
 def sphere_ev(t0, t):
     return acos(cos(t) / cos(t0)) / sin(t0) - acos(tan(t0) / tan(t))
@@ -62,3 +64,9 @@ def sphere_ev(t0, t):
 def sph_to_cart(v):
     r, theta, phi = v
     return (r * sin(theta) * cos(phi), r * sin(theta) * sin(phi), r * cos(theta))
+
+
+def pol_to_cart(r, theta, z=None):
+    if z is None:
+        return (r*cos(theta), r*sin(theta))
+    return (r*cos(theta), r*sin(theta), z)
