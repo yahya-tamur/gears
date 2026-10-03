@@ -1,6 +1,13 @@
+from .lib import disp, planetary_gear
 
-from .gears import ring_gear_assembly
-from .lib import disp
 
-mesh = ring_gear_assembly(modul=2, tooth_number=20, width=10, rim_width=10, pressure_angle=0.349066, helix_angle=0.349066, shortening_factor=0.6, tooth_step=16)
+mesh = planetary_gear(
+    modul=2,
+    sun_teeth=48,
+    planet_teeth=16,
+    number_planets=0,
+    width=20,
+    rim_width=4,
+    helix_angle=20,
+)
 disp(mesh)

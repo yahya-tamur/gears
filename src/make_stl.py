@@ -20,14 +20,10 @@ def triangulate_prism(top, bottom, closed=True, make_center=True):
     ans = []
 
     if closed:
-        ans += triangulate_polyhedron(
-            [top[-1], top[0], bottom[0], bottom[-1]]
-        )
+        ans += triangulate_polyhedron([top[-1], top[0], bottom[0], bottom[-1]])
 
     for i in range(len(top) - 1):
-        ans += triangulate_polyhedron(
-            [top[i], top[i + 1], bottom[i + 1], bottom[i]]
-        )
+        ans += triangulate_polyhedron([top[i], top[i + 1], bottom[i + 1], bottom[i]])
 
     return ans
 

@@ -1,119 +1,58 @@
-#!/bin/python
-from tkinter import Tk, ttk, font, filedialog
-import subprocess
-from .lib import bevel_herringbone_gear_pair
-from .make_stl import make_stl
+from .gui_lib import run_gui
+from .lib import bevel_herringbone_gear_pair, planetary_gear
+from sys import argv
 
 
-root = Tk()
+def run_bevel_gear_pair_gui():
+    bevel_gear_pair_parameters = [
+        ("modul", 2.0, "Tooth Size", "float"),
+        ("gear_teeth", 40, "Number of Gear Teeth", "int"),
+        ("pinion_teeth", 22, "Number of Pinion Teeth", "int"),
+        ("tooth_width", 25.0, "Width of Gear at Teeth", "float"),
+        ("axis_angle", 70.0, "Axis Angle", "float"),
+        ("gear_bore", 0.0, "Gear Bore Radius", "float"),
+        ("pinion_bore", 0.0, "Pinion Bore Radius", "float"),
+        ("pressure_angle", 20.0, "Pressure Angle", "float"),
+        ("helix_angle", 40.0, "Herringbone Angle", "float"),
+        ("together_built", "True", "Assemble Model", "bool"),
+        ("tooth_step", 16, "Teeth Resolution", "int"),
+    ]
 
-# 1. Fetch all default Tkinter fonts and update their sizes
-default_font = font.nametofont("TkDefaultFont")  # Used for Labels, Buttons, etc.
-text_font = font.nametofont("TkTextFont")  # Used for Entry, Text widgets
-menu_font = font.nametofont("TkMenuFont")  # Used for Menus
-
-# 2. Configure a new larger size (e.g., 16)
-for f in (default_font, text_font, menu_font):
-    f.configure(size=16)
-
-
-frm = ttk.Frame(root, padding=10)
-frm.grid()
-
-ttk.Label(frm, text="Bevel Herringbone Gear Pair Generator").grid(
-    column=0, row=0, columnspan=2, sticky="ew"
-)
-frm.grid_columnconfigure(0, minsize=300)
-
-filename = "./a.stl"
-
-filename_label = ttk.Label(frm, text=filename)
-filename_label.grid(column=1, row=1)
-
-
-def pick_file():
-    # Hide the main Tkinter root window if you only want the dialog
-    # root.withdraw()
-    global filename
-
-    new_filename = filedialog.asksaveasfilename(
-        title="Save As",
-        initialfile="a.stl",
-        initialdir=".",
-        filetypes=(("Stl File", "*.stl"),),
+    run_gui(
+        "Bevel Gear Pair Generator",
+        bevel_gear_pair_parameters,
+        bevel_herringbone_gear_pair,
     )
 
-    if new_filename:
-        filename_label.config(text=new_filename)
-        filename = new_filename
-    else:
-        print("No file was selected.")
+
+def run_planetary_gear_gui():
+    planetary_gear_parameters = [
+        ("modul", 2.0, "Tooth Size", "float"),
+        ("sun_teeth", 16, "Number of Sun Teeth", "int"),
+        ("planet_teeth", 16, "Number of Planet Teeth", "int"),
+        ("width", 30.0, "Width", "float"),
+        ("number_planets", 4, "Number of Planets", "int"),
+        ("rim_width", 5.0, "Ring Gear Width", "float"),
+        ("sun_bore", 2.0, "Sun Gear Bore", "float"),
+        ("planet_bore", 1.0, "Planet Gear Bore", "float"),
+        ("pressure_angle", 20, "Pressure Angle", "float"),
+        ("helix_angle", 30, "Herringbone Angle", "float"),
+        ("together_built", "True", "Assemble Model", "bool"),
+        ("tooth_step", 16, "Teeth Resolution", "int"),
+        ("ring_shortening_factor", 1, "Ring Teeth Shortening", "float"),
+    ]
+
+    run_gui("Planetary Gear Generator", planetary_gear_parameters, planetary_gear)
 
 
-ttk.Button(frm, text="Save As", command=pick_file).grid(column=0, row=1)
-
-line = 2
-
-
-def make_entry(text, default):
-    global line
-    ttk.Label(frm, text=text).grid(column=0, row=line)
-    entry = ttk.Entry(frm)
-    entry.grid(column=1, row=line)
-    entry.insert(0, default)
-    line += 1
-    return entry.get
-
-
-get_viewer = make_entry("stl viewer", "fstl")
-get_modul = make_entry("modul", 2)
-get_gear_teeth = make_entry("Gear Teeth", 40)
-get_pinion_teeth = make_entry("Pinion Teeth", 22)
-get_tooth_width = make_entry("Tooth Width", 25)
-get_axis_angle = make_entry("Axis Angle", 70)
-get_gear_bore = make_entry("Gear Bore", 0)
-get_pinion_bore = make_entry("Pinion Bore", 0)
-get_pressure_angle = make_entry("Pressure Angle", 20)
-get_helix_angle = make_entry("Helix Angle", 40)
-get_together_built = make_entry("Build Together", "True")
-get_tooth_step = make_entry("Tooth Step", 16)
-
-
-def string_to_bool(s):
-    if s.lower() in ("true", "t"):
-        return True
-    if s.lower() in ("false", "f"):
-        return False
-    raise ValueError(f"Invalid boolean value: {s}")
-
-
-def create(open_viewer=True):
-    global filename
-
-    mesh = bevel_herringbone_gear_pair(
-        modul=float(get_modul()),
-        gear_teeth=int(get_gear_teeth()),
-        pinion_teeth=int(get_pinion_teeth()),
-        tooth_width=float(get_tooth_width()),
-        axis_angle=float(get_axis_angle()),
-        gear_bore=float(get_gear_bore()),
-        pinion_bore=float(get_pinion_bore()),
-        pressure_angle=float(get_pressure_angle()),
-        helix_angle=float(get_helix_angle()),
-        together_built=string_to_bool(get_together_built()),
-        tooth_step=int(get_tooth_step()),
-    )
-    viewer = get_viewer()
-    make_stl(mesh, filename)
-    if open_viewer:
-        subprocess.Popen([viewer, filename])
-
-
-def update():
-    create(open_viewer=False)
-
-
-ttk.Button(frm, text="Create", command=create).grid(column=0, row=line, sticky="ew")
-ttk.Button(frm, text="Update", command=update).grid(column=1, row=line, sticky="ew")
-
-root.mainloop()
+if __name__ == "__main__":
+    match argv[1]:
+        case "planetary":
+            run_planetary_gear_gui()
+        case "bevel_pair":
+            run_bevel_gear_pair_gui()
+        case _:
+            print()
+            print("Run with `python -m src.gui <mode>`")
+            print("Supported modes: 'planetary', 'bevel_pair'")
+            print()

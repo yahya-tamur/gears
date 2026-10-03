@@ -10,6 +10,8 @@ from .gears import (
     bevel_herringbone_gear_assembly,
     bevel_gear_pair_assembly,
     bevel_herringbone_gear_pair_assembly,
+    herringbone_ring_gear_assembly,
+    planetary_gear_assembly,
 )
 
 from .math import rad
@@ -114,6 +116,60 @@ def bevel_herringbone_gear_pair(
         rad(helix_angle),
         together_built,
         tooth_step,
+    )
+
+
+def herringbone_ring_gear(
+    modul,
+    tooth_number,
+    width,
+    rim_width=5,
+    pressure_angle=20,
+    helix_angle=10,
+    shortening_factor=1,
+    tooth_step=16,
+):
+    return herringbone_ring_gear_assembly(
+        modul,
+        tooth_number,
+        width,
+        rim_width,
+        rad(pressure_angle),
+        rad(helix_angle),
+        shortening_factor,
+        tooth_step,
+    )
+
+
+def planetary_gear(
+    modul,
+    sun_teeth,
+    planet_teeth,
+    width,
+    number_planets=0,
+    rim_width=5,
+    sun_bore=2,
+    planet_bore=1,
+    pressure_angle=20,
+    helix_angle=10,
+    together_built=True,
+    tooth_step=16,
+    ring_shortening_factor=1,
+):
+    return planetary_gear_assembly(
+        modul,
+        sun_teeth,
+        planet_teeth,
+        number_planets,
+        width,
+        rim_width,
+        sun_bore,
+        planet_bore,
+        rad(pressure_angle),
+        rad(helix_angle),
+        together_built,
+        tooth_step,
+        ring_shortening_factor,
     )
 
 

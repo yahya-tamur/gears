@@ -1,13 +1,12 @@
-from math import sin, cos, tan, atan, asin, acos, pi
+from math import sin, cos, tan, atan, asin, acos, pi, floor
 from .math import (
-    interpolate_line,
     center,
     rotate,
     translate,
     sphere_ev,
     sph_to_cart,
     polar_ev,
-    pol_to_cart
+    pol_to_cart,
 )
 from .make_stl import triangulate_polyhedron, triangulate_prism
 
@@ -138,14 +137,8 @@ def bevel_gear_assembly(
         tooth_step,
     )
 
-    tooth_top = (
-        tooth_nw
-        + tooth_ne[::-1]
-    )
-    tooth_bottom = (
-        tooth_sw
-        + tooth_se[::-1]
-    )
+    tooth_top = tooth_nw + tooth_ne[::-1]
+    tooth_bottom = tooth_sw + tooth_se[::-1]
 
     top_face, bottom_face = [], []
 
@@ -199,15 +192,15 @@ def bevel_gear_assembly(
         for k in range(len(top_face)):
             top_bore.append(
                 (
-                    -cos(2 * pi * k / len(top_face)),
-                    sin(2 * pi * k / len(top_face)),
+                    -bore / 2 * cos(2 * pi * k / len(top_face)),
+                    bore / 2 * sin(2 * pi * k / len(top_face)),
                     top_face[k][2],
                 )
             )
             bottom_bore.append(
                 (
-                    -cos(2 * pi * k / len(top_face)),
-                    sin(2 * pi * k / len(top_face)),
+                    -bore / 2 * cos(2 * pi * k / len(top_face)),
+                    bore / 2 * sin(2 * pi * k / len(top_face)),
                     bottom_face[k][2],
                 )
             )
@@ -263,8 +256,10 @@ def flat_herringbone_gear_data(
         tooth_be[i] = (a, b, tooth_width)
         tooth_ce[i] = (a, b, 2 * tooth_width)
 
-    rotate((0, 0, -gamma), tooth_bw)
-    rotate((0, 0, -gamma), tooth_be)
+    rotate((0, 0, -gamma), tooth_aw)
+    rotate((0, 0, -gamma), tooth_ae)
+    rotate((0, 0, -gamma), tooth_cw)
+    rotate((0, 0, -gamma), tooth_ce)
 
     return tooth_aw, tooth_ae, tooth_bw, tooth_be, tooth_cw, tooth_ce, tau
 
@@ -341,105 +336,6 @@ def bevel_herringbone_gear_data(
     return tooth_aw, tooth_ae, tooth_bw, tooth_be, tooth_cw, tooth_ce, tau
 
 
-def herringbone_ring_gear_data(modul, tooth_number, width, rim_width, pressure_angle, helix_angle, shortening_factor, tooth_step):
-    ha = shortening_factor
-    d = modul * tooth_number
-    r = d / 2
-    alpha_spur = atan(tan(pressure_angle)/cos(helix_angle)) 
-    db = d * cos(alpha_spur)
-    rb = db / 2
-    c = modul / 6
-    da = d + (modul+c) * 2.2 if (modul <1) else d + (modul+c) * 2
-    ra = da / 2
-    df = d - 2 * modul * ha
-    rf = df / 2
-    rho_ra = acos(rb/ra)
-
-    rho_r = acos(rb/r)
-
-    phi_r = tan(rho_r)-rho_r
-    gamma = width/(r*tan(pi/2-helix_angle))
-    step = rho_ra/tooth_step
-    tau = 2*pi/tooth_number
-
-    tooth_aw = []
-    tooth_ae = []
-
-    tooth_bw = []
-    tooth_be = []
-
-    tooth_cw = []
-    tooth_ce = []
-
-    tooth_width = (pi*(1+clearance))/tooth_number+2*phi_r 
-
-    print(rb, rf)
-
-    for i in range(tooth_step+1):
-        rho = i*step
-        a, b = polar_ev(rb, rho)
-        if a < rf:
-            continue
-        tooth_aw.append(pol_to_cart(a, b+gamma + tau, z=width))
-        tooth_ae.append(pol_to_cart(a, tooth_width - b + gamma, z=width))
-        tooth_bw.append(pol_to_cart(a, b + tau, z=width/2))
-        tooth_be.append(pol_to_cart(a, tooth_width - b, z=width/2))
-        tooth_cw.append(pol_to_cart(a, b+gamma + tau, z=0))
-        tooth_ce.append(pol_to_cart(a, tooth_width - b + gamma, z=0))
-
-    top_edge = [pol_to_cart(ra + rim_width, gamma, z=width), \
-        pol_to_cart(ra + rim_width, gamma + tau / 2, z=width)]
-    bottom_edge = [pol_to_cart(ra + rim_width, gamma, z=0), \
-        pol_to_cart(ra + rim_width, gamma + tau / 2, z=0)]
-
-    return (tooth_aw,
-        tooth_ae,
-        tooth_bw,
-        tooth_be,
-        tooth_cw,
-        tooth_ce,
-        top_edge,
-        bottom_edge,
-        tau)
-
-def ring_gear_assembly(modul, tooth_number, width, rim_width, pressure_angle, helix_angle, shortening_factor, tooth_step):
-    (tooth_aw, tooth_ae, tooth_bw, tooth_be, tooth_cw, tooth_ce, top_edge, bottom_edge, tau) = herringbone_ring_gear_data(modul, tooth_number, width, rim_width, pressure_angle, helix_angle, shortening_factor, tooth_step)
-
-    top_tooth = tooth_ae[::-1] + tooth_aw
-    middle_tooth = tooth_be[::-1] + tooth_bw
-    bottom_tooth = tooth_ce[::-1] +  tooth_cw
-    mesh = triangulate_polyhedron([top_edge[0], top_edge[1], top_tooth[-1], top_tooth[0]]) + \
-        triangulate_polyhedron(top_tooth, reverse=True) + \
-        triangulate_prism(top_tooth, middle_tooth, closed=False) + \
-        triangulate_prism(middle_tooth, bottom_tooth, closed=False) + \
-        triangulate_polyhedron(bottom_tooth) + \
-        triangulate_polyhedron([bottom_edge[0], bottom_edge[1], bottom_tooth[-1], bottom_tooth[0]], reverse=True ) + \
-        triangulate_prism(bottom_edge, top_edge, closed=False)
-
-    first_line = [top_edge[0], top_tooth[0], middle_tooth[0], bottom_tooth[0], bottom_edge[0]]
-    last_line = [top_edge[1], top_tooth[-1], middle_tooth[-1], bottom_tooth[-1], bottom_edge[1]]
-
-    for _ in range(tooth_number - 1):
-        rotate([0, 0, tau], top_tooth)
-        rotate([0, 0, tau], middle_tooth)
-        rotate([0, 0, tau], bottom_tooth)
-        rotate([0, 0, tau], top_edge)
-        rotate([0, 0, tau], bottom_edge)
-        first_line_ = [top_edge[0], top_tooth[0], middle_tooth[0], bottom_tooth[0], bottom_edge[0]]
-        last_line_ = [top_edge[1], top_tooth[-1], middle_tooth[-1], bottom_tooth[-1], bottom_edge[1]]
-        mesh += triangulate_polyhedron([top_edge[0], top_edge[1], top_tooth[-1], top_tooth[0]]) + \
-            triangulate_polyhedron(top_tooth, reverse=True) + \
-            triangulate_prism(top_tooth, middle_tooth, closed=False) + \
-            triangulate_prism(middle_tooth, bottom_tooth, closed=False) + \
-            triangulate_polyhedron(bottom_tooth) + \
-            triangulate_prism(first_line_, last_line, closed=True) + \
-            triangulate_polyhedron([bottom_edge[0], bottom_edge[1], bottom_tooth[-1], bottom_tooth[0]], reverse=True) + \
-            triangulate_prism(bottom_edge, top_edge, closed=False)
-        last_line = last_line_
-    mesh += triangulate_prism(first_line, last_line, closed=True)
-
-    return mesh
-
 def bevel_herringbone_gear_assembly(
     modul,
     tooth_number,
@@ -474,18 +370,9 @@ def bevel_herringbone_gear_assembly(
             )
         )
 
-    tooth_a = (
-        tooth_aw
-        + tooth_ae[::-1]
-    )
-    tooth_b = (
-        tooth_bw
-        + tooth_be[::-1]
-    )
-    tooth_c = (
-        tooth_cw
-        + tooth_ce[::-1]
-    )
+    tooth_a = tooth_aw + tooth_ae[::-1]
+    tooth_b = tooth_bw + tooth_be[::-1]
+    tooth_c = tooth_cw + tooth_ce[::-1]
 
     a_face, b_face, c_face = [], [], []
 
@@ -549,15 +436,15 @@ def bevel_herringbone_gear_assembly(
         for k in range(len(a_face)):
             top_bore.append(
                 (
-                    -cos(2 * pi * k / len(a_face)),
-                    sin(2 * pi * k / len(a_face)),
+                    -bore / 2 * cos(2 * pi * k / len(a_face)),
+                    bore / 2 * sin(2 * pi * k / len(a_face)),
                     a_face[k][2],
                 )
             )
             bottom_bore.append(
                 (
-                    -cos(2 * pi * k / len(a_face)),
-                    sin(2 * pi * k / len(a_face)),
+                    -bore / 2 * cos(2 * pi * k / len(a_face)),
+                    bore / 2 * sin(2 * pi * k / len(a_face)),
                     c_face[k][2],
                 )
             )
@@ -750,3 +637,268 @@ def bevel_herringbone_gear_pair_assembly(
                 translate([rkf_pinion * 2 + modul + rkf_gear, 0, 0], tri)
 
     return gear_1 + gear_2
+
+
+def herringbone_ring_gear_data(
+    modul,
+    tooth_number,
+    width,
+    rim_width,
+    pressure_angle,
+    helix_angle,
+    shortening_factor,
+    tooth_step,
+):
+    width = width / 2  # !!!
+    ha = shortening_factor
+    d = modul * tooth_number
+    r = d / 2
+    alpha_spur = atan(tan(pressure_angle) / cos(helix_angle))
+    db = d * cos(alpha_spur)
+    rb = db / 2
+    c = modul / 6
+    da = d + (modul + c) * 2.2 if (modul < 1) else d + (modul + c) * 2
+    ra = da / 2
+    df = d - 2 * modul * ha
+    rf = df / 2
+    rho_ra = acos(rb / ra)
+
+    rho_r = acos(rb / r)
+
+    phi_r = tan(rho_r) - rho_r
+    gamma = width / (r * tan(pi / 2 - helix_angle))
+    step = rho_ra / tooth_step
+    tau = 2 * pi / tooth_number
+
+    tooth_aw = []
+    tooth_ae = []
+
+    tooth_bw = []
+    tooth_be = []
+
+    tooth_cw = []
+    tooth_ce = []
+
+    tooth_width = (pi * (1 + clearance)) / tooth_number + 2 * phi_r
+
+    offset = -phi_r - (pi / 2) * (1 + clearance) / tooth_number
+
+    for i in range(tooth_step + 1):
+        rho = i * step
+        a, b = polar_ev(rb, rho)
+        if a < rf:
+            continue
+        tooth_aw.append(pol_to_cart(a, b + tau - gamma + offset, z=2 * width))
+        tooth_ae.append(pol_to_cart(a, tooth_width - b - gamma + offset, z=2 * width))
+        tooth_bw.append(pol_to_cart(a, b + tau + offset, z=width))
+        tooth_be.append(pol_to_cart(a, tooth_width - b + offset, z=width))
+        tooth_cw.append(pol_to_cart(a, b + tau - gamma + offset, z=0))
+        tooth_ce.append(pol_to_cart(a, tooth_width - b - gamma + offset, z=0))
+
+    top_edge = [
+        pol_to_cart(ra + rim_width, -gamma + offset, z=2 * width),
+        pol_to_cart(ra + rim_width, -gamma + tau / 2 + offset, z=2 * width),
+    ]
+    bottom_edge = [
+        pol_to_cart(ra + rim_width, -gamma + offset, z=0),
+        pol_to_cart(ra + rim_width, -gamma + tau / 2 + offset, z=0),
+    ]
+
+    return (
+        tooth_aw,
+        tooth_ae,
+        tooth_bw,
+        tooth_be,
+        tooth_cw,
+        tooth_ce,
+        top_edge,
+        bottom_edge,
+        tau,
+    )
+
+
+def herringbone_ring_gear_assembly(
+    modul,
+    tooth_number,
+    width,
+    rim_width,
+    pressure_angle,
+    helix_angle,
+    shortening_factor,
+    tooth_step,
+):
+    (
+        tooth_aw,
+        tooth_ae,
+        tooth_bw,
+        tooth_be,
+        tooth_cw,
+        tooth_ce,
+        top_edge,
+        bottom_edge,
+        tau,
+    ) = herringbone_ring_gear_data(
+        modul,
+        tooth_number,
+        width,
+        rim_width,
+        pressure_angle,
+        helix_angle,
+        shortening_factor,
+        tooth_step,
+    )
+
+    top_tooth = tooth_ae[::-1] + tooth_aw
+    middle_tooth = tooth_be[::-1] + tooth_bw
+    bottom_tooth = tooth_ce[::-1] + tooth_cw
+    mesh = (
+        triangulate_polyhedron([top_edge[0], top_edge[1], top_tooth[-1], top_tooth[0]])
+        + triangulate_polyhedron(top_tooth, reverse=True)
+        + triangulate_prism(top_tooth, middle_tooth, closed=False)
+        + triangulate_prism(middle_tooth, bottom_tooth, closed=False)
+        + triangulate_polyhedron(bottom_tooth)
+        + triangulate_polyhedron(
+            [bottom_edge[0], bottom_edge[1], bottom_tooth[-1], bottom_tooth[0]],
+            reverse=True,
+        )
+        + triangulate_prism(bottom_edge, top_edge, closed=False)
+    )
+
+    first_line = [
+        top_edge[0],
+        top_tooth[0],
+        middle_tooth[0],
+        bottom_tooth[0],
+        bottom_edge[0],
+    ]
+    last_line = [
+        top_edge[1],
+        top_tooth[-1],
+        middle_tooth[-1],
+        bottom_tooth[-1],
+        bottom_edge[1],
+    ]
+
+    for _ in range(tooth_number - 1):
+        rotate([0, 0, tau], top_tooth)
+        rotate([0, 0, tau], middle_tooth)
+        rotate([0, 0, tau], bottom_tooth)
+        rotate([0, 0, tau], top_edge)
+        rotate([0, 0, tau], bottom_edge)
+        first_line_ = [
+            top_edge[0],
+            top_tooth[0],
+            middle_tooth[0],
+            bottom_tooth[0],
+            bottom_edge[0],
+        ]
+        last_line_ = [
+            top_edge[1],
+            top_tooth[-1],
+            middle_tooth[-1],
+            bottom_tooth[-1],
+            bottom_edge[1],
+        ]
+        mesh += (
+            triangulate_polyhedron(
+                [top_edge[0], top_edge[1], top_tooth[-1], top_tooth[0]]
+            )
+            + triangulate_polyhedron(top_tooth, reverse=True)
+            + triangulate_prism(top_tooth, middle_tooth, closed=False)
+            + triangulate_prism(middle_tooth, bottom_tooth, closed=False)
+            + triangulate_polyhedron(bottom_tooth)
+            + triangulate_prism(first_line_, last_line, closed=True)
+            + triangulate_polyhedron(
+                [bottom_edge[0], bottom_edge[1], bottom_tooth[-1], bottom_tooth[0]],
+                reverse=True,
+            )
+            + triangulate_prism(bottom_edge, top_edge, closed=False)
+        )
+        last_line = last_line_
+    mesh += triangulate_prism(first_line, last_line, closed=True)
+
+    return mesh
+
+
+def planetary_gear_assembly(
+    modul,
+    sun_teeth,
+    planet_teeth,
+    number_planets,
+    width,
+    rim_width,
+    sun_bore,
+    planet_bore,
+    pressure_angle,
+    helix_angle,
+    together_built,
+    tooth_step,
+    ring_shortening_factor,
+):
+
+    d_planet = modul * planet_teeth
+    center_distance = modul * (sun_teeth + planet_teeth) / 2
+    ring_teeth = sun_teeth + 2 * planet_teeth
+
+    if number_planets == 0:
+        max_planets = floor(
+            pi / asin(modul * (planet_teeth) / (modul * (sun_teeth + planet_teeth)))
+        )
+        number_planets = [
+            n
+            for n in range(2, max_planets + 1)
+            if (((ring_teeth + sun_teeth) % n) == 0)
+        ][-1]
+
+    sun_gear = bevel_herringbone_gear_assembly(
+        modul, sun_teeth, 0, width, sun_bore, pressure_angle, -helix_angle, tooth_step
+    )
+
+    if planet_teeth % 2 == 0:
+        for tri in sun_gear:
+            rotate([0, 0, pi * (1 - clearance) / sun_teeth], tri)
+
+    mesh = sun_gear
+
+    planet_gear = bevel_herringbone_gear_assembly(
+        modul,
+        planet_teeth,
+        0,
+        width,
+        planet_bore,
+        pressure_angle,
+        helix_angle,
+        tooth_step,
+    )
+
+    for n in range(number_planets):
+        new_planet = [tri.copy() for tri in planet_gear]
+        for tri in new_planet:
+            #    rotate([0, 0, n*2*pi*d_sun/d_planet], tri)
+            if together_built:
+                translate(
+                    pol_to_cart(center_distance, 2 * pi * n / number_planets, z=0),
+                    tri,
+                )
+            else:
+                planet_distance = ring_teeth * modul / 2 + rim_width + d_planet
+                translate(
+                    [planet_distance, d_planet * (-(number_planets - 1) + 2 * n), 0],
+                    tri,
+                )
+        mesh += new_planet
+
+    ring_gear = herringbone_ring_gear_assembly(
+        modul,
+        ring_teeth,
+        width,
+        rim_width,
+        pressure_angle,
+        helix_angle,
+        ring_shortening_factor,
+        tooth_step,
+    )
+
+    mesh += ring_gear
+
+    return mesh
