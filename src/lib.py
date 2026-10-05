@@ -128,6 +128,7 @@ def herringbone_ring_gear(
     helix_angle=10,
     shortening_factor=1,
     tooth_step=16,
+    helix_step=5,
 ):
     return herringbone_ring_gear_assembly(
         modul,
@@ -138,6 +139,7 @@ def herringbone_ring_gear(
         rad(helix_angle),
         shortening_factor,
         tooth_step,
+        helix_step,
     )
 
 

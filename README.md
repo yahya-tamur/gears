@@ -39,8 +39,19 @@ to do:
 
 nice to have:
 * more polygons for linear_extrusion!
-    - bevel gears may be more difficult.
-* I adapted bevel gears which use spherical coordinates to make flat gears (called spur
-    gears in original), but the library contains math to do this using polar instead of spherical coordinates. So, I should probably just port that code instead.
+    - in progress :(   \)
+    - working mesh_ring, mesh_gear up to teeth
+
+    - finish mesh_gear and use it for both ring_gear and bevel_herringbone_gear
+    - do spur_gear and have lib call the correct one
+    - delete old stuff (non herringbone gears) remove text 'herringbone' from lib
+
+
+    - check gear pairs and examples
+    - finish readme, screenshots, make post
+    
+    - is filename thing fixed?
+
 * tkinter gui for some other functions?
+    * auto generate these??
 * port other gear designs?

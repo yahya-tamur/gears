@@ -1,4 +1,4 @@
-from math import sin, cos, tan, acos, pi
+from math import sin, cos, tan, acos, pi, sqrt
 
 
 def interpolate_line(a, b, n, endpoints=True):
@@ -72,3 +72,26 @@ def pol_to_cart(r, theta, z=None):
     if z is None:
         return (r * cos(theta), r * sin(theta))
     return (r * cos(theta), r * sin(theta), z)
+
+def diff(v, w):
+    return (v[0] - w[0], v[1] - w[1], v[2] - w[2])
+
+def distance(v, w):
+    a, b, c = diff(v, w)
+    return sqrt(a*a + b*b + c*c)
+
+# line must have at least two points
+def diameter(line):
+    return max(max(distance(line[i], line[j]) for i in range(j)) for j in range(1, len(line)))
+
+def segment_point_distance(p, q, center):
+    px, py, pz = p
+    qx, qy, qz = q
+    cx, cy, cz = center
+    t = ((cx - px)*(qx - px) + (cy - py)*(qy - py) + (cz - pz)*(qz - pz))/(distance(p, q) ** 2)
+    if t <= 0:
+        return distance(p, center)
+    if t >= 1:
+        return distance(q, center)
+    w = px + t*(qx - px), py + t*(qy - py), pz + t*(qz - pz)
+    return distance(w, center)

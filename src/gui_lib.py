@@ -91,6 +91,7 @@ def run_gui(title, parameters, callback):
 
         viewer = get_viewer()
         make_stl(mesh, filename)
+        print(filename)
         if open_viewer:
             subprocess.Popen([viewer, filename])
 
