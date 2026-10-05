@@ -8,7 +8,7 @@ into stl files, which are just sets of triangles in 3d space.
 This program by comparison, calculates the correct positions of vertices,
 and saves them directly into stl files.
 
-Compare the number of errors below, or check out the generated in the
+Compare the number of errors below, or check out the generated stl's in the
 'comparison' folder.
 
 before:
