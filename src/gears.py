@@ -53,7 +53,7 @@ def bevel_gear_data(
     delta_a = asin(ra_outside / rg_outside)
     delta_b = asin(cos(alpha_spur) * sin(partial_cone_angle))
 
-    #height_f = rg_outside * cos(delta_f)
+    # height_f = rg_outside * cos(delta_f)
 
     # height_k = (rg_outside - tooth_width) / cos(partial_cone_angle)
     # rk = (rg_outside - tooth_width) / sin(partial_cone_angle)
@@ -288,17 +288,17 @@ def bevel_herringbone_gear_data(
     rg_outside = r_outside / sin(partial_cone_angle)
     c = modul / 6
     df_outside = d_outside - (modul + c) * 2 * cos(partial_cone_angle)
-    #rf_outside = df_outside / 2
-    #delta_f = asin(rf_outside / rg_outside)
-    #height_f = rg_outside * cos(delta_f)
+    # rf_outside = df_outside / 2
+    # delta_f = asin(rf_outside / rg_outside)
+    # height_f = rg_outside * cos(delta_f)
 
     gamma_g = 2 * atan(tooth_width * tan(helix_angle) / (2 * rg_outside - tooth_width))
     gamma = 2 * asin(rg_outside / r_outside * sin(gamma_g / 2))
 
-    #height_k = (rg_outside - tooth_width) / cos(partial_cone_angle)
-    #rk = (rg_outside - tooth_width) / sin(partial_cone_angle)
+    # height_k = (rg_outside - tooth_width) / cos(partial_cone_angle)
+    # rk = (rg_outside - tooth_width) / sin(partial_cone_angle)
     # rfk = rk * height_k * tan(delta_f) / (rk + height_k * tan(delta_f))
-    #height_fk = rk * height_k / (height_k * tan(delta_f) + rk)
+    # height_fk = rk * height_k / (height_k * tan(delta_f) + rk)
 
     modul_inside = modul * (1 - tooth_width / rg_outside)
 
@@ -341,7 +341,7 @@ def bevel_herringbone_gear_data(
         rotate([0, 0, -gamma], pt_list)
     #        translate([0, 0, height_f - height_fk], pt_list)
 
-    #tooth_bw, tooth_be = [], []
+    # tooth_bw, tooth_be = [], []
     v_west = tooth_top_west.pop()
     v_east = tooth_top_east.pop()
 
@@ -360,7 +360,7 @@ def bevel_herringbone_gear_data(
 #    return tooth_aw, tooth_ae, tooth_bw, tooth_be, tooth_cw, tooth_ce, tau
 
 
-#def bevel_herringbone_gear_assembly(
+# def bevel_herringbone_gear_assembly(
 #    modul,
 #    tooth_number,
 #    partial_cone_angle,
@@ -369,7 +369,7 @@ def bevel_herringbone_gear_data(
 #    pressure_angle,
 #    helix_angle,
 #    tooth_step,
-#):
+# ):
 #    if partial_cone_angle == 0:
 #        tooth_aw, tooth_ae, tooth_bw, tooth_be, tooth_cw, tooth_ce, tau = (
 #            flat_herringbone_gear_data(
@@ -402,7 +402,7 @@ def bevel_herringbone_gear_data(
 #
 #    ans = []
 ##
-    # create top and bottom teeth faces, teeth open prisms
+# create top and bottom teeth faces, teeth open prisms
 
 #    i = 0
 #    while True:
@@ -480,7 +480,7 @@ def bevel_herringbone_gear_data(
 #    return ans
 
 
-#def bevel_gear_pair_assembly(
+# def bevel_gear_pair_assembly(
 #    modul,
 #    gear_teeth,
 #    pinion_teeth,
@@ -492,7 +492,7 @@ def bevel_herringbone_gear_data(
 #    helix_angle,
 #    together_built,
 #    tooth_step,
-#):
+# ):
 
 #    r_gear = modul * gear_teeth / 2
 #    delta_gear = atan(sin(axis_angle) / (pinion_teeth / gear_teeth + cos(axis_angle)))
@@ -547,9 +547,9 @@ def bevel_herringbone_gear_data(
 #        for tri in gear_2:
 #            translate([rkf_pinion * 2 + modul + rkf_gear, 0, 0], tri)#
 
-    # you can have rotate and translate take list slices, not lists,
-    # and add the option to pass ans into bevel_gear
-    # so you don't have to do this copy.
+# you can have rotate and translate take list slices, not lists,
+# and add the option to pass ans into bevel_gear
+# so you don't have to do this copy.
 #    return gear_1 + gear_2
 
 
