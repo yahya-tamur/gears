@@ -5,13 +5,10 @@ process is complicated and error-prone. Since it supports differences,
 unions, etc. of 3d volumes ("CSG"), it has a hard time converting these
 into stl files, which are just sets of triangles in 3d space.
 
-The original 'gears' script works by creating rectangular prisms,
-then stretching them and rotating them to make the gear shapes.
-
 This program by comparison, calculates the correct positions of vertices,
 and saves them directly into stl files.
 
-Compare the number of errors below, or check out the generated in the
+Compare the number of errors below, or check out the generated stl's in the
 'comparison' folder.
 
 before:
