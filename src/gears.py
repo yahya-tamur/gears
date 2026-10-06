@@ -7,7 +7,6 @@ from .math import (
     sph_to_cart,
     polar_ev,
     pol_to_cart,
-    diff,
 )
 
 # later maybe??
@@ -44,9 +43,7 @@ def bevel_gear_data(
     rg_inside = rg_outside - tooth_width
     # r_inside = r_outside * rg_inside / rg_outside
     alpha_spur = atan(tan(pressure_angle) / cos(helix_angle))
-    da_outside = d_outside + (modul * 2) * cos(
-        partial_cone_angle
-    )
+    da_outside = d_outside + (modul * 2) * cos(partial_cone_angle)
     ra_outside = da_outside / 2
     c = modul / 6
     df_outside = d_outside - (modul + c) * 2 * cos(partial_cone_angle)
@@ -56,7 +53,7 @@ def bevel_gear_data(
     delta_a = asin(ra_outside / rg_outside)
     delta_b = asin(cos(alpha_spur) * sin(partial_cone_angle))
 
-    height_f = rg_outside * cos(delta_f)
+    #height_f = rg_outside * cos(delta_f)
 
     # height_k = (rg_outside - tooth_width) / cos(partial_cone_angle)
     # rk = (rg_outside - tooth_width) / sin(partial_cone_angle)
@@ -72,13 +69,8 @@ def bevel_gear_data(
 
     mirrpoint = (pi * (1 - clearance)) / tooth_number + 2 * phi_r
 
-    tooth_nw = []
-    tooth_ne = []
-    tooth_sw = []
-    tooth_se = []
-
-    teeth_west = [[] for _ in range(helix_step+1)]
-    teeth_east = [[] for _ in range(helix_step+1)]
+    teeth_west = [[] for _ in range(helix_step + 1)]
+    teeth_east = [[] for _ in range(helix_step + 1)]
     ## $0 -> north, $-1: south
 
     start = delta_f
@@ -86,55 +78,57 @@ def bevel_gear_data(
     if delta_b > delta_f:
         flankpoint_under = 1 * mirrpoint
 
-        for j in range(helix_step+1):
-            print("??")
-            rrr = (rg_outside*(helix_step-j) + rg_inside*j)/helix_step
-            ggg = j*gamma/helix_step
-            teeth_east[j].append(sph_to_cart((rrr, delta_f, flankpoint_under+ggg)))
-            teeth_west[j].append(sph_to_cart((rrr, delta_f, mirrpoint-flankpoint_under+ggg)))
+        for j in range(helix_step + 1):
+            rrr = (rg_outside * (helix_step - j) + rg_inside * j) / helix_step
+            ggg = j * gamma / helix_step
+            teeth_east[j].append(sph_to_cart((rrr, delta_f, flankpoint_under + ggg)))
+            teeth_west[j].append(
+                sph_to_cart((rrr, delta_f, mirrpoint - flankpoint_under + ggg))
+            )
 
-#        tooth_ne.append(sph_to_cart((rg_outside, delta_f, flankpoint_under)))
-#        tooth_se.append(sph_to_cart((rg_inside, delta_f, flankpoint_under + gamma)))
-#        tooth_sw.append(
-#            sph_to_cart((rg_inside, delta_f, mirrpoint - flankpoint_under + gamma))
-#        )
-#        tooth_nw.append(
-#            sph_to_cart((rg_outside, delta_f, mirrpoint - flankpoint_under))
-#        )
+        #        tooth_ne.append(sph_to_cart((rg_outside, delta_f, flankpoint_under)))
+        #        tooth_se.append(sph_to_cart((rg_inside, delta_f, flankpoint_under + gamma)))
+        #        tooth_sw.append(
+        #            sph_to_cart((rg_inside, delta_f, mirrpoint - flankpoint_under + gamma))
+        #        )
+        #        tooth_nw.append(
+        #            sph_to_cart((rg_outside, delta_f, mirrpoint - flankpoint_under))
+        #        )
 
         start = delta_b
         step = (delta_a - delta_b) / tooth_step
-
 
     for i in range(tooth_step + 1):
         delta = start + i * step
         flankpoint_under = sphere_ev(delta_b, delta)
 
-        for j in range(helix_step+1):
-            rrr = (rg_outside*(helix_step-j) + rg_inside*j)/helix_step
-            ggg = j*gamma/helix_step
-            print(j, rrr, ggg)
-            teeth_west[j].append(sph_to_cart((rrr, delta, flankpoint_under+ggg)))
-            teeth_east[j].append(sph_to_cart((rrr, delta, mirrpoint-flankpoint_under+ggg)))
+        for j in range(helix_step + 1):
+            rrr = (rg_outside * (helix_step - j) + rg_inside * j) / helix_step
+            ggg = j * gamma / helix_step
+            teeth_west[j].append(sph_to_cart((rrr, delta, flankpoint_under + ggg)))
+            teeth_east[j].append(
+                sph_to_cart((rrr, delta, mirrpoint - flankpoint_under + ggg))
+            )
 
-#        tooth_nw.append(sph_to_cart((rg_outside, delta, flankpoint_under)))
-#        tooth_sw.append(sph_to_cart((rg_inside, delta, flankpoint_under + gamma)))
-#        tooth_se.append(
-#            sph_to_cart((rg_inside, delta, mirrpoint - flankpoint_under + gamma))
-#        )
-#        tooth_ne.append(sph_to_cart((rg_outside, delta, mirrpoint - flankpoint_under)))
+    #        tooth_nw.append(sph_to_cart((rg_outside, delta, flankpoint_under)))
+    #        tooth_sw.append(sph_to_cart((rg_inside, delta, flankpoint_under + gamma)))
+    #        tooth_se.append(
+    #            sph_to_cart((rg_inside, delta, mirrpoint - flankpoint_under + gamma))
+    #        )
+    #        tooth_ne.append(sph_to_cart((rg_outside, delta, mirrpoint - flankpoint_under)))
 
     for line in teeth_west:
-#    for pt_list in (tooth_nw, tooth_ne, tooth_sw, tooth_se):
+        #    for pt_list in (tooth_nw, tooth_ne, tooth_sw, tooth_se):
         rotate([0, pi, 0], line)
         rotate([0, 0, phi_r + pi / 2 * (1 - clearance) / tooth_number], line)
 
     for line in teeth_east:
-#    for pt_list in (tooth_nw, tooth_ne, tooth_sw, tooth_se):
+        #    for pt_list in (tooth_nw, tooth_ne, tooth_sw, tooth_se):
         rotate([0, pi, 0], line)
         rotate([0, 0, phi_r + pi / 2 * (1 - clearance) / tooth_number], line)
 
     return (teeth_west, teeth_east, -tau)
+
 
 def bevel_gear_data_old(
     modul,
@@ -225,8 +219,6 @@ def bevel_gear_data_old(
     return (tooth_nw, tooth_ne, tooth_sw, tooth_se, -tau)
 
 
-
-
 def flat_herringbone_gear_data(
     modul, tooth_number, tooth_width, pressure_angle, helix_angle, tooth_step
 ):
@@ -287,7 +279,7 @@ def bevel_herringbone_gear_data(
     pressure_angle,
     helix_angle,
     tooth_step,
-    helix_step
+    helix_step,
 ):
 
     tooth_width = tooth_width / 2
@@ -296,17 +288,17 @@ def bevel_herringbone_gear_data(
     rg_outside = r_outside / sin(partial_cone_angle)
     c = modul / 6
     df_outside = d_outside - (modul + c) * 2 * cos(partial_cone_angle)
-    rf_outside = df_outside / 2
-    delta_f = asin(rf_outside / rg_outside)
-    height_f = rg_outside * cos(delta_f)
+    #rf_outside = df_outside / 2
+    #delta_f = asin(rf_outside / rg_outside)
+    #height_f = rg_outside * cos(delta_f)
 
     gamma_g = 2 * atan(tooth_width * tan(helix_angle) / (2 * rg_outside - tooth_width))
     gamma = 2 * asin(rg_outside / r_outside * sin(gamma_g / 2))
 
-    height_k = (rg_outside - tooth_width) / cos(partial_cone_angle)
-    rk = (rg_outside - tooth_width) / sin(partial_cone_angle)
+    #height_k = (rg_outside - tooth_width) / cos(partial_cone_angle)
+    #rk = (rg_outside - tooth_width) / sin(partial_cone_angle)
     # rfk = rk * height_k * tan(delta_f) / (rk + height_k * tan(delta_f))
-    height_fk = rk * height_k / (height_k * tan(delta_f) + rk)
+    #height_fk = rk * height_k / (height_k * tan(delta_f) + rk)
 
     modul_inside = modul * (1 - tooth_width / rg_outside)
 
@@ -328,7 +320,7 @@ def bevel_herringbone_gear_data(
         pressure_angle,
         helix_angle,
         tooth_step,
-        helix_step
+        helix_step,
     )
 
     tooth_bottom_west, tooth_bottom_east, tau = bevel_gear_data(
@@ -339,7 +331,7 @@ def bevel_herringbone_gear_data(
         pressure_angle,
         -helix_angle,
         tooth_step,
-        helix_step
+        helix_step,
     )
 
     for pt_list in tooth_bottom_west:
@@ -347,222 +339,218 @@ def bevel_herringbone_gear_data(
 
     for pt_list in tooth_bottom_east:
         rotate([0, 0, -gamma], pt_list)
-#        translate([0, 0, height_f - height_fk], pt_list)
+    #        translate([0, 0, height_f - height_fk], pt_list)
 
-
-    tooth_bw, tooth_be = [], []
+    #tooth_bw, tooth_be = [], []
     v_west = tooth_top_west.pop()
     v_east = tooth_top_east.pop()
 
     tooth_top_west.append([])
     tooth_top_east.append([])
     for i in range(len(v_west)):
-
-        print("A", diff(v_west[i], tooth_bottom_west[0][i]))
-        print("A", diff(v_east[i], tooth_bottom_east[0][i]))
-
         tooth_top_west[-1].append(center((v_west[i], tooth_bottom_west[0][i])))
         tooth_top_east[-1].append(center((v_east[i], tooth_bottom_east[0][i])))
-    
+
     tooth_top_west += tooth_bottom_west[1:]
     tooth_top_east += tooth_bottom_east[1:]
 
     return tooth_top_west, tooth_top_east
 
+
 #    return tooth_aw, tooth_ae, tooth_bw, tooth_be, tooth_cw, tooth_ce, tau
 
 
-def bevel_herringbone_gear_assembly(
-    modul,
-    tooth_number,
-    partial_cone_angle,
-    tooth_width,
-    bore,
-    pressure_angle,
-    helix_angle,
-    tooth_step,
-):
-    if partial_cone_angle == 0:
-        tooth_aw, tooth_ae, tooth_bw, tooth_be, tooth_cw, tooth_ce, tau = (
-            flat_herringbone_gear_data(
-                modul,
-                tooth_number,
-                tooth_width,
-                pressure_angle,
-                helix_angle,
-                tooth_step,
-            )
-        )
-    else:
-        tooth_aw, tooth_ae, tooth_bw, tooth_be, tooth_cw, tooth_ce, tau = (
-            bevel_herringbone_gear_data(
-                modul,
-                tooth_number,
-                partial_cone_angle,
-                tooth_width,
-                pressure_angle,
-                helix_angle,
-                tooth_step,
-            )
-        )
+#def bevel_herringbone_gear_assembly(
+#    modul,
+#    tooth_number,
+#    partial_cone_angle,
+#    tooth_width,
+#    bore,
+#    pressure_angle,
+#    helix_angle,
+#    tooth_step,
+#):
+#    if partial_cone_angle == 0:
+#        tooth_aw, tooth_ae, tooth_bw, tooth_be, tooth_cw, tooth_ce, tau = (
+#            flat_herringbone_gear_data(
+#                modul,
+#                tooth_number,
+#                tooth_width,
+#                pressure_angle,
+#                helix_angle,
+#                tooth_step,
+#            )
+#        )
+#    else:
+#        tooth_aw, tooth_ae, tooth_bw, tooth_be, tooth_cw, tooth_ce, tau = (
+#            bevel_herringbone_gear_data(
+#                modul,
+#                tooth_number,
+#                partial_cone_angle,
+#                tooth_width,
+#                pressure_angle,
+#                helix_angle,
+#                tooth_step,
+#            )
+#        )
 
-    tooth_a = tooth_aw + tooth_ae[::-1]
-    tooth_b = tooth_bw + tooth_be[::-1]
-    tooth_c = tooth_cw + tooth_ce[::-1]
-
-    a_face, b_face, c_face = [], [], []
-
-    ans = []
-
+#    tooth_a = tooth_aw + tooth_ae[::-1]
+#    tooth_b = tooth_bw + tooth_be[::-1]
+#    tooth_c = tooth_cw + tooth_ce[::-1]
+#
+#    a_face, b_face, c_face = [], [], []#
+#
+#    ans = []
+##
     # create top and bottom teeth faces, teeth open prisms
 
-    i = 0
-    while True:
-        ans += triangulate_polyhedron(tooth_a)
-        ans += triangulate_polyhedron(tooth_c, reverse=True)
-        ans += triangulate_prism(tooth_b, tooth_a, closed=False)
-        ans += triangulate_prism(tooth_c, tooth_b, closed=False)
+#    i = 0
+#    while True:
+#        ans += triangulate_polyhedron(tooth_a)
+#        ans += triangulate_polyhedron(tooth_c, reverse=True)
+#        ans += triangulate_prism(tooth_b, tooth_a, closed=False)
+#        ans += triangulate_prism(tooth_c, tooth_b, closed=False)#
 
-        if len(a_face) > 0:
-            a_line = [a_face[-1], tooth_a[0]]
-            b_line = [b_face[-1], tooth_b[0]]
-            c_line = [c_face[-1], tooth_c[0]]
-            ans += triangulate_prism(b_line, a_line, closed=False)
-            ans += triangulate_prism(c_line, b_line, closed=False)
-            a_face.pop()
-            b_face.pop()
-            c_face.pop()
-            a_face += a_line
-            b_face += b_line
-            c_face += c_line
-            a_face.append(tooth_a[-1])
-            b_face.append(tooth_b[-1])
-            c_face.append(tooth_c[-1])
-        else:
-            a_face = [tooth_a[0], tooth_a[-1]]
-            b_face = [tooth_b[0], tooth_b[-1]]
-            c_face = [tooth_c[0], tooth_c[-1]]
+#        if len(a_face) > 0:
+#            a_line = [a_face[-1], tooth_a[0]]
+#            b_line = [b_face[-1], tooth_b[0]]
+#            c_line = [c_face[-1], tooth_c[0]]
+#            ans += triangulate_prism(b_line, a_line, closed=False)
+#            ans += triangulate_prism(c_line, b_line, closed=False)
+#            a_face.pop()
+#            b_face.pop()
+#            c_face.pop()
+#            a_face += a_line
+#            b_face += b_line
+#            c_face += c_line
+#            a_face.append(tooth_a[-1])
+#            b_face.append(tooth_b[-1])
+#            c_face.append(tooth_c[-1])
+#        else:
+#            a_face = [tooth_a[0], tooth_a[-1]]
+#            b_face = [tooth_b[0], tooth_b[-1]]
+#            c_face = [tooth_c[0], tooth_c[-1]]
 
-        i += 1
-        if i == tooth_number:
-            break
-        rotate((0, 0, tau), tooth_a)
-        rotate((0, 0, tau), tooth_b)
-        rotate((0, 0, tau), tooth_c)
+#        i += 1
+#        if i == tooth_number:
+#            break
+#        rotate((0, 0, tau), tooth_a)
+#        rotate((0, 0, tau), tooth_b)
+#        rotate((0, 0, tau), tooth_c)
 
-    a_line = [a_face[-1], a_face[0]]
-    b_line = [b_face[-1], b_face[0]]
-    c_line = [c_face[-1], c_face[0]]
-    ans += triangulate_prism(b_line, a_line, closed=False)
-    ans += triangulate_prism(c_line, b_line, closed=False)
+#    a_line = [a_face[-1], a_face[0]]
+#    b_line = [b_face[-1], b_face[0]]
+#    c_line = [c_face[-1], c_face[0]]
+#    ans += triangulate_prism(b_line, a_line, closed=False)
+#    ans += triangulate_prism(c_line, b_line, closed=False)
 
-    a_line.pop()
-    c_line.pop()
-    a_face.pop()
-    c_face.pop()
-    a_face += a_line
-    c_face += c_line
+#    a_line.pop()
+#    c_line.pop()
+#    a_face.pop()
+#    c_face.pop()
+#    a_face += a_line
+#    c_face += c_line
 
-    if bore == 0:
-        ans += triangulate_polyhedron(a_face)
-        ans += triangulate_polyhedron(c_face, reverse=True)
+#    if bore == 0:
+#        ans += triangulate_polyhedron(a_face)
+#        ans += triangulate_polyhedron(c_face, reverse=True)
 
-    else:
-        top_bore, bottom_bore = [], []
-        for k in range(len(a_face)):
-            top_bore.append(
-                (
-                    -bore / 2 * cos(2 * pi * k / len(a_face)),
-                    bore / 2 * sin(2 * pi * k / len(a_face)),
-                    a_face[k][2],
-                )
-            )
-            bottom_bore.append(
-                (
-                    -bore / 2 * cos(2 * pi * k / len(a_face)),
-                    bore / 2 * sin(2 * pi * k / len(a_face)),
-                    c_face[k][2],
-                )
-            )
+#    else:
+#        top_bore, bottom_bore = [], []
+#        for k in range(len(a_face)):
+#            top_bore.append(
+#                (
+#                    -bore / 2 * cos(2 * pi * k / len(a_face)),
+#                    bore / 2 * sin(2 * pi * k / len(a_face)),
+#                    a_face[k][2],
+#                )
+#            )
+#            bottom_bore.append(
+#                (
+#                    -bore / 2 * cos(2 * pi * k / len(a_face)),
+#                    bore / 2 * sin(2 * pi * k / len(a_face)),
+#                    c_face[k][2],
+#                )
+#            )
 
-        ans += triangulate_prism(a_face, top_bore, closed=True)
-        ans += triangulate_prism(top_bore, bottom_bore, closed=True)
-        ans += triangulate_prism(bottom_bore, c_face, closed=True)
+#        ans += triangulate_prism(a_face, top_bore, closed=True)
+#        ans += triangulate_prism(top_bore, bottom_bore, closed=True)
+#        ans += triangulate_prism(bottom_bore, c_face, closed=True)
 
-    return ans
+#    return ans
 
 
-def bevel_gear_pair_assembly(
-    modul,
-    gear_teeth,
-    pinion_teeth,
-    axis_angle,
-    tooth_width,
-    gear_bore,
-    pinion_bore,
-    pressure_angle,
-    helix_angle,
-    together_built,
-    tooth_step,
-):
+#def bevel_gear_pair_assembly(
+#    modul,
+#    gear_teeth,
+#    pinion_teeth,
+#    axis_angle,
+#    tooth_width,
+#    gear_bore,
+#    pinion_bore,
+#    pressure_angle,
+#    helix_angle,
+#    together_built,
+#    tooth_step,
+#):
 
-    r_gear = modul * gear_teeth / 2
-    delta_gear = atan(sin(axis_angle) / (pinion_teeth / gear_teeth + cos(axis_angle)))
-    delta_pinion = atan(sin(axis_angle) / (gear_teeth / pinion_teeth + cos(axis_angle)))
-    rg = r_gear / sin(delta_gear)
-    c = modul / 6
-    df_pinion = 2 * rg * delta_pinion - 2 * (modul + c)
-    rf_pinion = df_pinion / 2
-    delta_f_pinion = rf_pinion / (pi * rg) * pi
-    rkf_pinion = rg * sin(delta_f_pinion)
-    height_f_pinion = rg * cos(delta_f_pinion)
+#    r_gear = modul * gear_teeth / 2
+#    delta_gear = atan(sin(axis_angle) / (pinion_teeth / gear_teeth + cos(axis_angle)))
+#    delta_pinion = atan(sin(axis_angle) / (gear_teeth / pinion_teeth + cos(axis_angle)))
+#    rg = r_gear / sin(delta_gear)
+#    c = modul / 6
+#    df_pinion = 2 * rg * delta_pinion - 2 * (modul + c)
+#    rf_pinion = df_pinion / 2
+#    delta_f_pinion = rf_pinion / (pi * rg) * pi
+#    rkf_pinion = rg * sin(delta_f_pinion)
+#    height_f_pinion = rg * cos(delta_f_pinion)
 
-    df_gear = 2 * rg * delta_gear - 2 * (modul + c)
-    rf_gear = df_gear / 2
-    delta_f_gear = rf_gear / rg
-    rkf_gear = rg * sin(delta_f_gear)
-    height_f_gear = rg * cos(delta_f_gear)
+#    df_gear = 2 * rg * delta_gear - 2 * (modul + c)
+#    rf_gear = df_gear / 2
+#    delta_f_gear = rf_gear / rg
+#    rkf_gear = rg * sin(delta_f_gear)
+#    height_f_gear = rg * cos(delta_f_gear)
 
-    gear_1 = bevel_gear_assembly(
-        modul,
-        gear_teeth,
-        delta_gear,
-        tooth_width,
-        gear_bore,
-        pressure_angle,
-        helix_angle,
-        tooth_step,
-    )
+#    gear_1 = bevel_gear_assembly(
+#        modul,
+#        gear_teeth,
+#        delta_gear,
+#        tooth_width,
+#        gear_bore,
+#        pressure_angle,
+#        helix_angle,
+#        tooth_step,
+#    )
 
-    if pinion_teeth % 2 == 0:
-        for tri in gear_1:
-            rotate([0, 0, pi * (1 - clearance) / gear_teeth], tri)
+#    if pinion_teeth % 2 == 0:
+#        for tri in gear_1:
+#            rotate([0, 0, pi * (1 - clearance) / gear_teeth], tri)
 
-    gear_2 = bevel_gear_assembly(
-        modul,
-        pinion_teeth,
-        delta_pinion,
-        tooth_width,
-        pinion_bore,
-        pressure_angle,
-        -helix_angle,
-        tooth_step,
-    )
+#    gear_2 = bevel_gear_assembly(
+#        modul,
+#        pinion_teeth,
+#        delta_pinion,
+#        tooth_width,
+#        pinion_bore,
+#        pressure_angle,
+#        -helix_angle,
+#        tooth_step,
+#    )
 
-    if together_built:
-        for tri in gear_2:
-            rotate([0, axis_angle, 0], tri)
-            dx = -height_f_pinion * cos(pi / 2 - axis_angle)
-            dz = height_f_gear - height_f_pinion * sin(pi / 2 - axis_angle)
-            translate([dx, 0, dz], tri)
-    else:
-        for tri in gear_2:
-            translate([rkf_pinion * 2 + modul + rkf_gear, 0, 0], tri)
+#    if together_built:
+#        for tri in gear_2:
+#            rotate([0, axis_angle, 0], tri)
+#            dx = -height_f_pinion * cos(pi / 2 - axis_angle)
+#            dz = height_f_gear - height_f_pinion * sin(pi / 2 - axis_angle)
+#            translate([dx, 0, dz], tri)
+#    else:
+#        for tri in gear_2:
+#            translate([rkf_pinion * 2 + modul + rkf_gear, 0, 0], tri)#
 
     # you can have rotate and translate take list slices, not lists,
     # and add the option to pass ans into bevel_gear
     # so you don't have to do this copy.
-    return gear_1 + gear_2
+#    return gear_1 + gear_2
 
 
 def bevel_herringbone_gear_pair_assembly(
@@ -797,9 +785,6 @@ def herringbone_ring_gear_assembly(
         tooth_step,
         helix_step,
     )
-
-    for line in teeth:
-        print(len(line))
 
     mesh = (
         triangulate_polyhedron(

@@ -36,11 +36,18 @@ into stl files using `make_stl` from `make_stl.py`.
 
 to do:
 * more polygons for linear_extrusion!
-    - I have working mesh_ring, mesh_gear up to teeth
+    - better final step of mesh_ring
 
-    - finish mesh_gear and use it for both ring_gear and bevel_herringbone_gear
-    - do spur_gear and have lib call the correct one
-    - delete old stuff (non herringbone gears) remove text 'herringbone' from lib
+    - adapt gears:
+        - make gear_pair
+
+        - make ring_gear
+        - make spur_gear
+        - make planetary_gear
+
+        - delete everything else
+        - make lib call the correct stuff
+
     - make sure openscad comparison uses updated version
     - check gear pairs and examples
   

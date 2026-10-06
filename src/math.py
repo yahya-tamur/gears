@@ -73,25 +73,61 @@ def pol_to_cart(r, theta, z=None):
         return (r * cos(theta), r * sin(theta))
     return (r * cos(theta), r * sin(theta), z)
 
+
 def diff(v, w):
     return (v[0] - w[0], v[1] - w[1], v[2] - w[2])
 
+
 def distance(v, w):
     a, b, c = diff(v, w)
-    return sqrt(a*a + b*b + c*c)
+    return sqrt(a * a + b * b + c * c)
+
 
 # line must have at least two points
 def diameter(line):
-    return max(max(distance(line[i], line[j]) for i in range(j)) for j in range(1, len(line)))
+    return max(
+        max(distance(line[i], line[j]) for i in range(j)) for j in range(1, len(line))
+    )
+
 
 def segment_point_distance(p, q, center):
     px, py, pz = p
     qx, qy, qz = q
     cx, cy, cz = center
-    t = ((cx - px)*(qx - px) + (cy - py)*(qy - py) + (cz - pz)*(qz - pz))/(distance(p, q) ** 2)
+    t = ((cx - px) * (qx - px) + (cy - py) * (qy - py) + (cz - pz) * (qz - pz)) / (
+        distance(p, q) ** 2
+    )
     if t <= 0:
         return distance(p, center)
     if t >= 1:
         return distance(q, center)
-    w = px + t*(qx - px), py + t*(qy - py), pz + t*(qz - pz)
+    w = px + t * (qx - px), py + t * (qy - py), pz + t * (qz - pz)
     return distance(w, center)
+
+
+def unit(v):
+    (a, b, c) = v
+    n = sqrt(a * a + b * b + c * c)
+    return (a / n, b / n, c / n)
+
+
+def gram_schmidt3(v, w, z):
+    v = unit(v)
+
+    v1, v2, v3 = v
+    w1, w2, w3 = w
+
+    c = v1 * w1 + v2 * w2 + v3 * w3
+
+    w = unit((w1 - c * v1, w2 - c * v2, w3 - c * v3))
+    w1, w2, w3 = w
+
+    z1, z2, z3 = z
+    z_1, z_2, z_3 = (w2 * v3 - w3 * v2, w3 * v1 - w1 * v3, w1 * v2 - w2 * v1)
+
+    if (z1 * z_1 + z2 * z_2 + z3 * z_3) < 0:
+        z = (-z_1, -z_2, -z_3)
+    else:
+        z = (z_1, z_2, z_3)
+
+    return (w, z)
