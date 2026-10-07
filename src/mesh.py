@@ -2,6 +2,7 @@ from .math import (
     center,
     interpolate_line,
     rotate,
+    translate,
 )
 
 from .math3d import (
@@ -217,21 +218,30 @@ class Mesh:
     def add_grid(self, grid, reverse=False):
         for i in range(len(grid) - 1):
             for j in range(len(grid[0]) - 1):
+                self.add_triangle(grid[i][j], grid[i + 1][j], grid[i][j + 1], reverse)
                 self.add_triangle(
-                    grid[i][j], grid[i + 1][j], grid[i][j + 1], reverse=reverse
-                )
-                self.add_triangle(
-                    grid[i + 1][j], grid[i + 1][j + 1], grid[i][j + 1], reverse=reverse
+                    grid[i + 1][j], grid[i + 1][j + 1], grid[i][j + 1], reverse
                 )
 
-    def add_stitch(self, first_line, second_line, n):
+    def add_stitch(self, first_line, second_line, n, reverse=False):
         grid = [interpolate_line(v, w, n) for (v, w) in zip(first_line, second_line)]
-        self.add_grid(grid)
+        self.add_grid(grid, reverse)
         return grid[0], grid[-1]
 
     def add_gear(
-        self, tooth_west, tooth_east, tooth_number, flat_step, bore, bore_steps
+        self,
+        tooth_west,
+        tooth_east,
+        tooth_number,
+        flat_steps,
+        bore,
+        bore_steps,
+        ring_gear,
     ):
+        if ring_gear:
+            for line in tooth_east:
+                rotate([0, 0, 2 * pi / tooth_number], line)
+            tooth_west, tooth_east = tooth_east, tooth_west
 
         teeth_west = [[line.copy() for line in tooth_west] for _ in range(tooth_number)]
         teeth_east = [[line.copy() for line in tooth_east] for _ in range(tooth_number)]
@@ -243,10 +253,10 @@ class Mesh:
                 rotate([0, 0, 2 * pi * i / tooth_number], line)
 
         for tooth_west in teeth_west:
-            self.add_grid(tooth_west)
+            self.add_grid(tooth_west, reverse=ring_gear ^ False)
 
         for tooth_east in teeth_east:
-            self.add_grid(tooth_east, reverse=True)
+            self.add_grid(tooth_east, reverse=ring_gear ^ True)
 
         top_edge = []
         bottom_edge = []
@@ -255,31 +265,81 @@ class Mesh:
             bottom_between, top_between = self.add_stitch(
                 [line[0] for line in teeth_east[i + 1]],
                 [line[0] for line in teeth_west[i]],
-                flat_step,
+                flat_steps,
+                reverse=ring_gear,
             )
             bottom_tip, top_tip = self.add_stitch(
                 [line[-1] for line in teeth_west[i]],
                 [line[-1] for line in teeth_east[i]],
-                flat_step,
+                flat_steps,
+                reverse=ring_gear,
             )
-            bottom_base = interpolate_line(
-                teeth_east[i][0][0], teeth_west[i][0][0], flat_step, endpoints=False
-            )
-            top_base = interpolate_line(
-                teeth_east[i][-1][0], teeth_west[i][-1][0], flat_step, endpoints=False
-            )
-            self.add_convex_polygon(
-                teeth_west[i][-1] + top_tip[1:-1] + teeth_east[i][-1][::-1] + top_base,
-                reverse=True,
-            )
-            self.add_convex_polygon(
-                teeth_west[i][0]
-                + bottom_tip[1:-1]
-                + teeth_east[i][0][::-1]
-                + bottom_base,
-            )
-            top_edge += top_base + top_between[::-1]
-            bottom_edge += bottom_base + bottom_between[::-1]
+
+            if ring_gear:
+                bottom_base = interpolate_line(
+                    teeth_east[i + 1][0][-1],
+                    teeth_west[i][0][-1],
+                    flat_steps,
+                    endpoints=False,
+                )
+                top_base = interpolate_line(
+                    teeth_east[i + 1][-1][-1],
+                    teeth_west[i][-1][-1],
+                    flat_steps,
+                    endpoints=False,
+                )
+                # self.add_stitch(teeth_west[i][-1], teeth_east[i+1][-1], flat_steps)
+                self.add_convex_polygon(
+                    teeth_west[i][0]
+                    + bottom_base[::-1]
+                    + teeth_east[i + 1][0][::-1]
+                    + bottom_between[1:-1],
+                    reverse=True,
+                )
+                self.add_convex_polygon(
+                    teeth_west[i][-1]
+                    + top_base[::-1]
+                    + teeth_east[i + 1][-1][::-1]
+                    + top_between[1:-1],
+                )
+                top_edge += top_tip[::-1] + top_base[::-1]
+                bottom_edge += bottom_tip[::-1] + bottom_base[::-1]
+                # self.add_convex_polygon(
+                #     teeth_west[i][0]
+                #     + bottom_tip[1:-1]
+                #     + teeth_east[i][0][::-1]
+                #     + bottom_base,
+                # )
+                # top_edge += top_base + top_between[::-1]
+                # bottom_edge += bottom_base + bottom_between[::-1]
+            else:
+                bottom_base = interpolate_line(
+                    teeth_east[i][0][0],
+                    teeth_west[i][0][0],
+                    flat_steps,
+                    endpoints=False,
+                )
+                top_base = interpolate_line(
+                    teeth_east[i][-1][0],
+                    teeth_west[i][-1][0],
+                    flat_steps,
+                    endpoints=False,
+                )
+                self.add_convex_polygon(
+                    teeth_west[i][-1]
+                    + top_tip[1:-1]
+                    + teeth_east[i][-1][::-1]
+                    + top_base,
+                    reverse=True,
+                )
+                self.add_convex_polygon(
+                    teeth_west[i][0]
+                    + bottom_tip[1:-1]
+                    + teeth_east[i][0][::-1]
+                    + bottom_base,
+                )
+                top_edge += top_base + top_between[::-1]
+                bottom_edge += bottom_base + bottom_between[::-1]
 
         if bore == 0:
             self.add_convex_polygon(top_edge)
@@ -319,10 +379,31 @@ class Mesh:
                     )
                 )
 
-            self.add_ring(top_edge, top_bore)
-            self.add_ring(bottom_edge, bottom_bore, reverse=True)
+            if ring_gear:
+                self.add_ring(top_bore, top_edge, reverse=False)
+                self.add_ring(bottom_bore, bottom_edge, reverse=True)
+            else:
+                self.add_ring(top_edge, top_bore, reverse=False)
+                self.add_ring(bottom_edge, bottom_bore, reverse=True)
 
             top_bore.append(top_bore[0])
             bottom_bore.append(bottom_bore[0])
 
-            self.add_stitch(top_bore, bottom_bore, len(teeth_west[0]))
+            self.add_stitch(
+                top_bore, bottom_bore, len(teeth_west[0]), reverse=ring_gear ^ False
+            )
+
+        n = 0
+        z = 0
+        for _, _, z_ in bottom_edge:
+            z = (n / (n + 1)) * z + (1 / (n + 1)) * z_
+            n += 1
+        return z
+
+    def translate(self, a):
+        for tri in self.mesh:
+            translate(a, tri)
+
+    def rotate(self, a):
+        for tri in self.mesh:
+            rotate(a, tri)

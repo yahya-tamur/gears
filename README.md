@@ -33,26 +33,23 @@ into stl files using `make_stl` from `make_stl.py`.
 
 to do:
 * more polygons for linear_extrusion!
-    - better final step of mesh_ring
-
     - adapt gears:
         - make gear_pair
-
-        - make ring_gear
         - make spur_gear
         - make planetary_gear
 
-        - delete everything else
-        - make lib call the correct stuff
-
-    - make sure openscad comparison uses updated version
-    - check gear pairs and examples
-  
-    - finish readme, screenshots, make post
-    
-    - is filename thing fixed?
+        - clean up:
+            - delete everything else
+            - lib working?
+            - gui working?
+                - is filename thing fixed?
+            - comparison up to date?
+                - update openscad version as well
+            - update screenshots, explanation above
+            - make post
 
 nice to have:
 * tkinter gui for some other functions?
     * auto generate these??
+        * no, I have better variable names and types
 * port other gear designs?
