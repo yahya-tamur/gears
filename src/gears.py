@@ -58,24 +58,25 @@ def spur_gear_data(
     teeth_west = [[] for _ in range(2 * helix_steps + 1)]
     teeth_east = [[] for _ in range(2 * helix_steps + 1)]
 
-    for j in range(helix_steps):
-        r, theta = rf, 0
-        ggg = j * gamma / helix_steps
-        zzz = j * tooth_width / helix_steps
+    if rf < rb:
+        for j in range(helix_steps):
+            r, theta = rf, 0
+            ggg = j * gamma / helix_steps
+            zzz = j * tooth_width / helix_steps
 
-        teeth_west[j].append(pol_to_cart(r, 0 + theta - ggg + offset, z=zzz))
-        teeth_west[2 * helix_steps - j].append(
-            pol_to_cart(r, 0 + theta - ggg + offset, z=2 * tooth_width - zzz)
-        )
-        teeth_east[j].append(pol_to_cart(r, mirrpoint - theta - ggg + offset, z=zzz))
-        teeth_east[2 * helix_steps - j].append(
-            pol_to_cart(r, mirrpoint - theta - ggg + offset, z=2 * tooth_width - zzz)
-        )
+            teeth_west[j].append(pol_to_cart(r, 0 + theta - ggg + offset, z=zzz))
+            teeth_west[2 * helix_steps - j].append(
+                pol_to_cart(r, 0 + theta - ggg + offset, z=2 * tooth_width - zzz)
+            )
+            teeth_east[j].append(pol_to_cart(r, mirrpoint - theta - ggg + offset, z=zzz))
+            teeth_east[2 * helix_steps - j].append(
+                pol_to_cart(r, mirrpoint - theta - ggg + offset, z=2 * tooth_width - zzz)
+            )
 
-    teeth_west[helix_steps].append(pol_to_cart(rf, -gamma + offset, z=tooth_width))
-    teeth_east[helix_steps].append(
-        pol_to_cart(rf, mirrpoint - gamma + offset, z=tooth_width)
-    )
+        teeth_west[helix_steps].append(pol_to_cart(rf, -gamma + offset, z=tooth_width))
+        teeth_east[helix_steps].append(
+            pol_to_cart(rf, mirrpoint - gamma + offset, z=tooth_width)
+        )
 
     # this should be better than the older version of sampling points (this way,
     # they're evenly spaced along the curve). But, I haven't applied this to
@@ -584,7 +585,8 @@ def herringbone_ring_gear_data(
 
     # calculated differently from original!!
     # it made more sense to me to have higher shortening factor = more shortening
-    rf = rb + modul * ha
+    # not sure why ha=1 doesn't mean no teeth
+    rf = rb + (ra - rb) * ha
 
     rho_r = acos(rb / r)
 
@@ -630,4 +632,4 @@ def herringbone_ring_gear_data(
             pol_to_cart(r, mirrpoint - theta - gamma + offset, z=width)
         )
 
-    return teeth_east, teeth_west, 2 * (ra + rim_width)
+    return teeth_west, teeth_east, 2 * (ra + rim_width)

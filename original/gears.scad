@@ -602,11 +602,8 @@ module ring_gear(modul, tooth_number, width, rim_width, pressure_angle = 20, hel
     phi_r = grad(tan(rho_r)-radian(rho_r));                         // Angle to Point of Involute on Pitch Circle
     gamma = rad*width/(r*tan(90-helix_angle));               // Torsion Angle for Extrusion
     step = rho_ra/16;                                            // Involute is divided into 16 pieces
-    tau = 360/tooth_number;                                          // Pitch Angle
-    
-    echo("ALPHASPUR", alpha_spur)
-    echo("RBRA", rb, ra);
-    echo(0, rho_ra);
+    tau = 360/tooth_number;                                             // Pitch Angle
+
     // Drawing
     rotate([0,0,-phi_r-90*(1+clearance)/tooth_number])                      // Center Tooth on X-Axis;
                                                                     // Makes Alignment with other Gears easier

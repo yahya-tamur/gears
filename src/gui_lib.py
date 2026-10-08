@@ -55,7 +55,7 @@ def run_gui(title, parameters, callback):
         line += 1
         return entry.get
 
-    get_viewer = make_entry("stl viewer", "fstl")
+    get_viewer = make_entry("STL Viewer", "fstl")
     get_param = {
         name: make_entry(text, default) for (name, default, text, _) in parameters
     }
@@ -91,7 +91,6 @@ def run_gui(title, parameters, callback):
         callback(**params)
 
         viewer = get_viewer()
-        print(filename)
         if open_viewer:
             subprocess.Popen([viewer, filename])
 

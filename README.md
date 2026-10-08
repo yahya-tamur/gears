@@ -1,3 +1,5 @@
+### Readme
+
 This is an effort to port the original openscad library.
 
 The main reason I started to do this is that the openscad stl creation
@@ -32,7 +34,7 @@ can also import `lib.py` (or `mesh.py` and `gears.py`) from python.
 
 ![gui example](./gui_example.png)
 
-# Explanation of Some Parameters
+### Explanation of Some Parameters
 Many of the parameters are self-explanatory or make an obvious impact when changed.
 
 Here are a few that might not be:
@@ -40,15 +42,11 @@ Here are a few that might not be:
 -  `stl_viewer`: `fstl` is a lightweight stl viewer available in Windows and Linux for free, and it's what's screenshotted above. I have not tested this with other viewers.
 - `Width at Teeth`: Since the two gears might have different widths, the width is measured at the teeth, where they meet.
 - `Pressure Angle`: You can look up pressure angle for gears to see pictures of what this is. 20 degrees is one standard.
-- `* Resolution`: Determines model complexity. For example, teeth resolution is the number of points in the curved part of a gear tooth (minus one, if you include the enpoints of the latter).
-- `addendum factor`: This is specified as 1 in the standard DIN 867 and as 1.1 in DIN 58400. The original code uses `1` if `Tooth Size` is less than `1`, and `1.1` otherwise. However, bevel gears have variable tooth sizes, and you might want to keep this a constant across a project.
+- `* Resolution`: Determines model complexity. For example, teeth resolution is the number of points in the curved part of a gear tooth (minus one, if you include the endpoints of the latter).
+- `addendum factor`: This is specified as 1 in DIN 867 and as 1.1 in DIN 58400. The original code uses `1` if `Tooth Size` is less than `1`, and `1.1` otherwise. However, bevel gears have variable tooth sizes, and you might want to keep this a constant across a project.
 - `Create` vs `Update`: The only difference is that `Create` also opens the stl viewer.
 
-# to do:
-    - clean up:
-        - recompile comparison
-        - update screenshots, explanation above
-        - make post
+### to do
 
 nice to have:
 * gui for some other functions?

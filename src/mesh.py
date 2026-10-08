@@ -18,22 +18,6 @@ from .math3d import (
 from math import pi, sin, cos
 import struct
 
-# 'closed' means the first and last points will be connected.
-
-
-# def mesh_prism(top, bottom, closed=True, make_center=True):
-#    ans = []
-
-#    if closed:
-#        ans += triangulate_polyhedron([top[-1], top[0], bottom[0], bottom[-1]])
-
-#    for i in range(len(top) - 1):
-#        ans += triangulate_polyhedron([top[i], top[i + 1], bottom[i + 1], bottom[i]])
-
-#    return ans
-# only to simplify code involving reverse
-
-
 # factor = 0 -> point,
 # factor = 1 -> center
 # factor = -1 -> center + 2*(point - center)
@@ -99,9 +83,7 @@ class Mesh:
 
     #  direction = 1 for inside, -1 for outside
     # this will try to move by max_delta, but only move by the
-    # max diameter of the smallest segment
-    # if full_move is True, if the max diameter of the smallest segment is
-    # more than max_delta, instead of moving by max_delta, it will fail.
+    # max diameter of the smallest segment.
     # (1 + (direction)max delta) times = most scaling possible
     def scale_reduce(self, line, max_delta, direction, reverse=False):
         center_point = center(line)

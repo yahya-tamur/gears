@@ -17,7 +17,7 @@ def run_gear_pair_gui():
         ("tooth_steps", 16, "Teeth Resolution", "int"),
         ("helix_steps", 20, "Helix Resolution", "int"),
         ("bore_steps", 10, "Bore Resolution", "int"),
-        ("da_factor", 1, "addendum", "float"),
+        ("da_factor", 1, "Addendum Factor", "float"),
     ]
 
     run_gui(
@@ -38,12 +38,12 @@ def run_planetary_gear_gui():
         ("bore", 2.0, "Bore Diameter", "float"),
         ("pressure_angle", 20, "Pressure Angle", "float"),
         ("helix_angle", 30, "Helix Angle", "float"),
-        ("ring_shortening_factor", 0.6, "Ring Shortening Factor", "float"),
+        ("ring_shortening_factor", 0.3, "Ring Shortening Factor", "float"),
         ("together_built", "True", "Assemble Model", "bool"),
         ("tooth_steps", 16, "Teeth Resolution", "int"),
         ("helix_steps", 20, "Helix Resolution", "int"),
         ("bore_steps", 40, "Ring Resolution", "int"),
-        ("da_factor", 1, "addendum factor", "float"),
+        ("da_factor", 1, "Addendum Factor", "float"),
     ]
 
     run_gui("Planetary Gear Generator", planetary_gear_parameters, make_planetary_gear)
