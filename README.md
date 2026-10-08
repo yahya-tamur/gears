@@ -35,7 +35,6 @@ to do:
 * more polygons for linear_extrusion!
     - adapt gears:
         - make gear_pair
-        - make spur_gear
         - make planetary_gear
 
         - clean up:

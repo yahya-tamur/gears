@@ -1,5 +1,9 @@
 from .mesh import Mesh
-from .gears import bevel_herringbone_gear_data, herringbone_ring_gear_data
+from .gears import (
+    bevel_herringbone_gear_data,
+    herringbone_ring_gear_data,
+    spur_gear_data,
+)
 from .math import rad
 
 
@@ -15,19 +19,34 @@ def bevel_gear(
     flat_steps=5,
     helix_steps=10,
     bore_steps=20,
+    # according to DIN 867; set to 1.1 for DIN 58400
+    da_factor=1,
     filename="a.stl",
 ):
 
-    tooth_west, tooth_east = bevel_herringbone_gear_data(
-        modul=modul,
-        tooth_number=tooth_number,
-        partial_cone_angle=rad(partial_cone_angle),
-        tooth_width=tooth_width,
-        pressure_angle=rad(pressure_angle),
-        helix_angle=rad(helix_angle),
-        tooth_steps=tooth_steps,
-        helix_steps=helix_steps,
-    )
+    if partial_cone_angle == 0:
+        tooth_west, tooth_east = spur_gear_data(
+            modul=modul,
+            tooth_number=tooth_number,
+            tooth_width=tooth_width,
+            pressure_angle=rad(pressure_angle),
+            helix_angle=rad(helix_angle),
+            tooth_steps=tooth_steps,
+            helix_steps=helix_steps,
+            da_factor=da_factor,
+        )
+    else:
+        tooth_west, tooth_east = bevel_herringbone_gear_data(
+            modul=modul,
+            tooth_number=tooth_number,
+            partial_cone_angle=rad(partial_cone_angle),
+            tooth_width=tooth_width,
+            pressure_angle=rad(pressure_angle),
+            helix_angle=rad(helix_angle),
+            tooth_steps=tooth_steps,
+            helix_steps=helix_steps,
+            da_factor=da_factor,
+        )
 
     mesh = Mesh()
     z = mesh.add_gear(
@@ -57,6 +76,7 @@ def ring_gear(
     flat_steps=5,
     helix_steps=10,
     cylinder_steps=20,
+    da_factor=1,
     filename="a.stl",
 ):
     tooth_west, tooth_east, radius = herringbone_ring_gear_data(

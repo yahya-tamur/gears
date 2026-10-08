@@ -104,7 +104,6 @@ class Mesh:
     # more than max_delta, instead of moving by max_delta, it will fail.
     # (1 + (direction)max delta) times = most scaling possible
     def scale_reduce(self, line, max_delta, direction, reverse=False):
-        print("scale reduce", len(line))
         center_point = center(line)
         segments = []
         line.append(line[0])
@@ -138,7 +137,6 @@ class Mesh:
             )
 
         line.pop()
-        print("scale reduce ans:", len(line_))
         return line_
 
     # nicely triangulates convex polygon made by line (set of coplanar points)
@@ -199,9 +197,6 @@ class Mesh:
         inner_extent = r_inner() + 0.4 * ring_distance()
         outer_extent = r_outer() - 0.4 * ring_distance()
 
-        print(
-            2 * point_distance(inner), inner_extent, point_distance(inner) / r_inner()
-        )
         while (
             2 * point_distance(inner) < inner_extent - r_inner()
             and point_distance(inner) / r_inner() < 1

@@ -6,6 +6,7 @@ from .math import (
     sph_to_cart,
     polar_ev,
     pol_to_cart,
+    translate,
 )
 
 # later maybe??
@@ -22,7 +23,95 @@ from .math import (
 
 # all angles in this file are in radians.
 
-clearance = 0.05
+# this is not used a lot, seriously consider deleting it.
+
+
+def spur_gear_data(
+    modul,
+    tooth_number,
+    tooth_width,
+    pressure_angle,
+    helix_angle,
+    tooth_steps,
+    helix_steps,
+    da_factor,
+):
+    tooth_width = tooth_width / 2  # !!!!
+    d = modul * tooth_number
+    r = d / 2
+    alpha_spur = atan(tan(pressure_angle) / cos(helix_angle))
+    db = d * cos(alpha_spur)
+    rb = db / 2
+    da = d + 2 * modul * da_factor
+    ra = da / 2
+    c = modul / 6
+    df = d - 2 * (modul + c)
+    rf = df / 2
+    rho_ra = acos(rb / ra)
+
+    rho_r = acos(rb / r)
+
+    phi_r = tan(rho_r) - rho_r
+    gamma = tooth_width / (r * tan(pi / 2 - helix_angle))
+    step = rho_ra / tooth_steps
+
+    mirrpoint = pi / tooth_number + 2 * phi_r
+
+    offset = pi - phi_r - (pi / 2) * 1 / tooth_number
+
+    teeth_west = [[] for _ in range(2 * helix_steps + 1)]
+    teeth_east = [[] for _ in range(2 * helix_steps + 1)]
+
+    for j in range(helix_steps):
+        r, theta = rf, 0
+        ggg = j * gamma / helix_steps
+        zzz = j * tooth_width / helix_steps
+
+        teeth_west[j].append(pol_to_cart(r, 0 + theta - ggg + offset, z=zzz))
+        teeth_west[2 * helix_steps - j].append(
+            pol_to_cart(r, 0 + theta - ggg + offset, z=2 * tooth_width - zzz)
+        )
+        teeth_east[j].append(pol_to_cart(r, mirrpoint - theta - ggg + offset, z=zzz))
+        teeth_east[2 * helix_steps - j].append(
+            pol_to_cart(r, mirrpoint - theta - ggg + offset, z=2 * tooth_width - zzz)
+        )
+
+    teeth_west[helix_steps].append(pol_to_cart(rf, -gamma + offset, z=tooth_width))
+    teeth_east[helix_steps].append(
+        pol_to_cart(rf, mirrpoint - gamma + offset, z=tooth_width)
+    )
+
+    for i in range(tooth_steps + 1):
+        # this is significantly different from the way the corresponding value is
+        # calculated for bevel gears, but they both seem to do a good enough job, so
+        # I didn't look into this further.
+        rho = i * step
+        r, theta = polar_ev(rb, rho)
+        for j in range(helix_steps):
+            ggg = j * gamma / helix_steps
+            zzz = j * tooth_width / helix_steps
+
+            teeth_west[j].append(pol_to_cart(r, 0 + theta - ggg + offset, z=zzz))
+            teeth_west[2 * helix_steps - j].append(
+                pol_to_cart(r, 0 + theta - ggg + offset, z=2 * tooth_width - zzz)
+            )
+            teeth_east[j].append(
+                pol_to_cart(r, mirrpoint - theta - ggg + offset, z=zzz)
+            )
+            teeth_east[2 * helix_steps - j].append(
+                pol_to_cart(
+                    r, mirrpoint - theta - ggg + offset, z=2 * tooth_width - zzz
+                )
+            )
+
+        teeth_west[helix_steps].append(
+            pol_to_cart(r, 0 + theta - gamma + offset, z=tooth_width)
+        )
+        teeth_east[helix_steps].append(
+            pol_to_cart(r, mirrpoint - theta - gamma + offset, z=tooth_width)
+        )
+
+    return teeth_east, teeth_west
 
 
 def bevel_gear_data(
@@ -34,6 +123,7 @@ def bevel_gear_data(
     helix_angle,
     tooth_steps,
     helix_steps,
+    da_factor,  # 1 or 1.1 based on modul < 1
 ):
 
     d_outside = modul * tooth_number
@@ -42,7 +132,7 @@ def bevel_gear_data(
     rg_inside = rg_outside - tooth_width
     # r_inside = r_outside * rg_inside / rg_outside
     alpha_spur = atan(tan(pressure_angle) / cos(helix_angle))
-    da_outside = d_outside + (modul * 2) * cos(partial_cone_angle)
+    da_outside = d_outside + da_factor * (modul * 2) * cos(partial_cone_angle)
     ra_outside = da_outside / 2
     c = modul / 6
     df_outside = d_outside - (modul + c) * 2 * cos(partial_cone_angle)
@@ -66,7 +156,7 @@ def bevel_gear_data(
 
     # tau = 2 * pi / tooth_number
 
-    mirrpoint = (pi * (1 - clearance)) / tooth_number + 2 * phi_r
+    mirrpoint = pi / tooth_number + 2 * phi_r
 
     teeth_west = [[] for _ in range(helix_steps + 1)]
     teeth_east = [[] for _ in range(helix_steps + 1)]
@@ -85,15 +175,6 @@ def bevel_gear_data(
                 sph_to_cart((rrr, delta_f, mirrpoint - flankpoint_under + ggg))
             )
 
-        #        tooth_ne.append(sph_to_cart((rg_outside, delta_f, flankpoint_under)))
-        #        tooth_se.append(sph_to_cart((rg_inside, delta_f, flankpoint_under + gamma)))
-        #        tooth_sw.append(
-        #            sph_to_cart((rg_inside, delta_f, mirrpoint - flankpoint_under + gamma))
-        #        )
-        #        tooth_nw.append(
-        #            sph_to_cart((rg_outside, delta_f, mirrpoint - flankpoint_under))
-        #        )
-
         start = delta_b
         step = (delta_a - delta_b) / tooth_steps
 
@@ -109,22 +190,15 @@ def bevel_gear_data(
                 sph_to_cart((rrr, delta, mirrpoint - flankpoint_under + ggg))
             )
 
-    #        tooth_nw.append(sph_to_cart((rg_outside, delta, flankpoint_under)))
-    #        tooth_sw.append(sph_to_cart((rg_inside, delta, flankpoint_under + gamma)))
-    #        tooth_se.append(
-    #            sph_to_cart((rg_inside, delta, mirrpoint - flankpoint_under + gamma))
-    #        )
-    #        tooth_ne.append(sph_to_cart((rg_outside, delta, mirrpoint - flankpoint_under)))
-
     for line in teeth_west:
         #    for pt_list in (tooth_nw, tooth_ne, tooth_sw, tooth_se):
         rotate([0, pi, 0], line)
-        rotate([0, 0, phi_r + pi / 2 * (1 - clearance) / tooth_number], line)
+        rotate([0, 0, phi_r + pi / 2 / tooth_number], line)
 
     for line in teeth_east:
         #    for pt_list in (tooth_nw, tooth_ne, tooth_sw, tooth_se):
         rotate([0, pi, 0], line)
-        rotate([0, 0, phi_r + pi / 2 * (1 - clearance) / tooth_number], line)
+        rotate([0, 0, phi_r + pi / 2 / tooth_number], line)
 
     return (teeth_west, teeth_east)
 
@@ -279,6 +353,7 @@ def bevel_herringbone_gear_data(
     helix_angle,
     tooth_steps,
     helix_steps,
+    da_factor,
 ):
 
     tooth_width = tooth_width / 2
@@ -320,6 +395,7 @@ def bevel_herringbone_gear_data(
         helix_angle,
         tooth_steps,
         helix_steps,
+        da_factor,
     )
 
     tooth_bottom_west, tooth_bottom_east = bevel_gear_data(
@@ -331,6 +407,8 @@ def bevel_herringbone_gear_data(
         -helix_angle,
         tooth_steps,
         helix_steps,
+        # ! not based on modul_inside
+        da_factor,
     )
 
     for pt_list in tooth_bottom_west:
@@ -352,6 +430,20 @@ def bevel_herringbone_gear_data(
 
     tooth_west = tooth_top_west + tooth_bottom_west[1:]
     tooth_east = tooth_top_east + tooth_bottom_east[1:]
+
+    z_average = 0
+    n = 0
+    for _, _, z in tooth_west[0]:
+        z_average = (n / (n + 1)) * z_average + (1 / (n + 1)) * z
+        n += 1
+    for _, _, z in tooth_east[0]:
+        z_average = (n / (n + 1)) * z_average + (1 / (n + 1)) * z
+        n += 1
+
+    for line in tooth_west:
+        translate([0, 0, -z_average], line)
+    for line in tooth_east:
+        translate([0, 0, -z_average], line)
 
     return tooth_west, tooth_east
 
@@ -672,6 +764,7 @@ def herringbone_ring_gear_data(
     shortening_factor,
     tooth_steps,
     helix_steps,
+    da_factor,
 ):
     width = width / 2  # !!!
     ha = shortening_factor
@@ -681,7 +774,7 @@ def herringbone_ring_gear_data(
     db = d * cos(alpha_spur)
     rb = db / 2
     c = modul / 6
-    da = d + (modul + c) * 2.2 if (modul < 1) else d + (modul + c) * 2
+    da = d + (modul + c) * 2 * da_factor
     ra = da / 2
     df = d - 2 * modul * ha
     rf = df / 2
@@ -694,9 +787,9 @@ def herringbone_ring_gear_data(
     step = rho_ra / tooth_steps
     tau = 2 * pi / tooth_number
 
-    tooth_width = (pi * (1 + clearance)) / tooth_number + 2 * phi_r
+    tooth_width = pi / tooth_number + 2 * phi_r
 
-    offset = -phi_r - (pi / 2) * (1 + clearance) / tooth_number
+    offset = -phi_r - pi / 2 / tooth_number
 
     teeth_west = [[] for _ in range((2 * helix_steps + 1))]
     teeth_east = [[] for _ in range((2 * helix_steps + 1))]
