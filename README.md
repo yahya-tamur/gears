@@ -25,8 +25,10 @@ after:
 
 This should make it easier to work with the generated models in other software.
 Also, this program is significantly faster. Generating the comparison
-images took `??` with this project and `??`
-with the original.
+images took `0.8439 seconds` with this project and `228.2624 seconds`
+with the original. Openscad (at least, by default) creates ASCII STL files,
+which take more space (per facet) but are more human-readable than the
+smaller binary STL files created by this library.
 
 The easiest way to use this program is by clicking on the scripts under
 `bin`. These just call `src/gui.py` with the corresponding argument. You
@@ -49,5 +51,7 @@ Here are a few that might not be:
 ### to do
 
 nice to have:
+* align gears exactly the way openscad aligns them so the comparison is easier?
+    * Also, there may be some tooth overlap issues without the 'clearence'.
 * gui for some other functions?
 * port other gear designs?
