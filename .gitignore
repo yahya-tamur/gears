@@ -1,5 +1,7 @@
 *.geany
-*.stl
 **/__pycache__/
 *.out
 .ruff_cache/**/*
+*.stl
+
+!/comparison/*.stl
