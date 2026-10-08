@@ -1,4 +1,4 @@
-from math import sin, cos, tan, atan, asin, acos, pi
+from math import sin, cos, tan, atan, asin, acos, pi, sqrt
 from .math import (
     center,
     rotate,
@@ -8,6 +8,8 @@ from .math import (
     pol_to_cart,
     translate,
 )
+
+from .math3d import distance
 
 # later maybe??
 # from mpmath import mp
@@ -47,13 +49,13 @@ def spur_gear_data(
     c = modul / 6
     df = d - 2 * (modul + c)
     rf = df / 2
-    rho_ra = acos(rb / ra)
+
 
     rho_r = acos(rb / r)
 
     phi_r = tan(rho_r) - rho_r
     gamma = tooth_width / (r * tan(pi / 2 - helix_angle))
-    step = rho_ra / tooth_steps
+
 
     mirrpoint = pi / tooth_number + 2 * phi_r
 
@@ -81,12 +83,20 @@ def spur_gear_data(
         pol_to_cart(rf, mirrpoint - gamma + offset, z=tooth_width)
     )
 
+    # this should be better than the older version of sampling points (this way,
+    # they're evenly spaced along the curve). But, I haven't applied this to
+    # bevel or ring gears yet.
+    # 1/2tan^2(t) is the length integral of the curve.
+    rho_ra = acos(rb / ra)
+    t_max = 0.5*(tan(rho_ra) ** 2)
+
     for i in range(tooth_steps + 1):
         # this is significantly different from the way the corresponding value is
         # calculated for bevel gears, but they both seem to do a good enough job, so
         # I didn't look into this further.
-        rho = i * step
-        r, theta = polar_ev(rb, rho)
+        t = atan(sqrt(2*(i/tooth_steps)*t_max))
+
+        r, theta = polar_ev(rb, t)
         for j in range(helix_steps):
             ggg = j * gamma / helix_steps
             zzz = j * tooth_width / helix_steps
@@ -110,6 +120,10 @@ def spur_gear_data(
         teeth_east[helix_steps].append(
             pol_to_cart(r, mirrpoint - theta - gamma + offset, z=tooth_width)
         )
+
+
+    for i in range(len(teeth_west[0])-1):
+        print(distance(teeth_west[0][i], teeth_west[0][i+1]))
 
     return teeth_east, teeth_west
 
@@ -778,13 +792,13 @@ def herringbone_ring_gear_data(
     ra = da / 2
     df = d - 2 * modul * ha
     rf = df / 2
-    rho_ra = acos(rb / ra)
+
 
     rho_r = acos(rb / r)
 
     phi_r = tan(rho_r) - rho_r
     gamma = width / (r * tan(pi / 2 - helix_angle))
-    step = rho_ra / tooth_steps
+
     tau = 2 * pi / tooth_number
 
     tooth_width = pi / tooth_number + 2 * phi_r
@@ -793,24 +807,32 @@ def herringbone_ring_gear_data(
 
     teeth_west = [[] for _ in range((2 * helix_steps + 1))]
     teeth_east = [[] for _ in range((2 * helix_steps + 1))]
+    
+    rho_ra = acos(rb / ra)
+    t_max = 0.5*(tan(rho_ra) ** 2)
+    step = rho_ra / tooth_steps
 
     for i in range(tooth_steps + 1):
         rho = i * step
-        a, b = polar_ev(rb, rho)
-        if a < rf:
+        t = atan(sqrt(2*(i/tooth_steps)*t_max))
+
+        r, theta = polar_ev(rb, t)
+
+        #a, b = polar_ev(rb, rho)
+        if r < rf:
             continue
         for j in range(helix_steps):
             teeth_west[j].append(
                 pol_to_cart(
-                    a,
-                    b + tau - gamma * (helix_steps - j) / helix_steps + offset,
+                    r,
+                    theta + tau - gamma * (helix_steps - j) / helix_steps + offset,
                     z=j * width / helix_steps,
                 )
             )
             teeth_east[j].append(
                 pol_to_cart(
-                    a,
-                    tooth_width - b - gamma * (helix_steps - j) / helix_steps + offset,
+                    r,
+                    tooth_width - theta - gamma * (helix_steps - j) / helix_steps + offset,
                     z=j * width / helix_steps,
                 )
             )
@@ -818,15 +840,15 @@ def herringbone_ring_gear_data(
         for j in range(helix_steps, 2 * helix_steps + 1):
             teeth_west[j].append(
                 pol_to_cart(
-                    a,
-                    b + tau - gamma * (j - helix_steps) / helix_steps + offset,
+                    r,
+                    theta + tau - gamma * (j - helix_steps) / helix_steps + offset,
                     z=j * width / helix_steps,
                 )
             )
             teeth_east[j].append(
                 pol_to_cart(
-                    a,
-                    tooth_width - b - gamma * (j - helix_steps) / helix_steps + offset,
+                    r,
+                    tooth_width - theta - gamma * (j - helix_steps) / helix_steps + offset,
                     z=j * width / helix_steps,
                 )
             )

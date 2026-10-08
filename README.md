@@ -34,6 +34,7 @@ into stl files using `make_stl` from `make_stl.py`.
 to do:
 * more polygons for linear_extrusion!
     - adapt gears:
+        - add arc length integral for bevel ring too
         - make gear_pair
         - make planetary_gear
 

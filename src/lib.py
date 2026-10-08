@@ -49,7 +49,7 @@ def bevel_gear(
         )
 
     mesh = Mesh()
-    z = mesh.add_gear(
+    mesh.add_gear(
         tooth_west,
         tooth_east,
         tooth_number=tooth_number,
@@ -58,8 +58,6 @@ def bevel_gear(
         bore_steps=bore_steps,
         ring_gear=False,
     )
-
-    mesh.translate((0, 0, -z))
 
     mesh.save_stl(filename)
 
@@ -89,21 +87,19 @@ def ring_gear(
         shortening_factor=shortening_factor,
         helix_steps=helix_steps,
         tooth_steps=tooth_steps,
+        da_factor=da_factor
     )
 
     mesh = Mesh()
-    z = mesh.add_gear(
+    mesh.add_gear(
         tooth_west,
         tooth_east,
         tooth_number=tooth_number,
         flat_steps=flat_steps,
         bore=radius,
         bore_steps=cylinder_steps,
-        return_z_offset=True,
         ring_gear=True,
     )
-
-    print(z)
 
     mesh.save_stl(filename)
 

@@ -385,15 +385,8 @@ class Mesh:
             bottom_bore.append(bottom_bore[0])
 
             self.add_stitch(
-                top_bore, bottom_bore, len(teeth_west[0]), reverse=ring_gear ^ False
+                top_bore, bottom_bore, 1, reverse=ring_gear ^ False
             )
-
-        n = 0
-        z = 0
-        for _, _, z_ in bottom_edge:
-            z = (n / (n + 1)) * z + (1 / (n + 1)) * z_
-            n += 1
-        return z
 
     def translate(self, a):
         for tri in self.mesh:
