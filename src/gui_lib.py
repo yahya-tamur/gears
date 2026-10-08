@@ -1,6 +1,5 @@
 from tkinter import Tk, ttk, font, filedialog
 import subprocess
-from .make_stl import make_stl
 
 
 # parameters = (name of variable, default, text, type)[]
@@ -27,7 +26,7 @@ def run_gui(title, parameters, callback):
     filename_label.grid(column=1, row=0)
 
     def pick_file():
-        global filename
+        nonlocal filename
 
         new_filename = filedialog.asksaveasfilename(
             title="Save As",
@@ -76,21 +75,22 @@ def run_gui(title, parameters, callback):
                 return float(inp)
             case "bool":
                 return string_to_bool(inp)
+            case "string":
+                return inp
             case _:
                 raise ValueError(f"Unsupported type {typ}")
 
     def create(open_viewer=True):
         nonlocal filename, get_param, eval_with_type
+        params = {
+            name: eval_with_type(get_param[name](), typ)
+            for (name, _, _, typ) in parameters
+        }
+        params["filename"] = filename
 
-        mesh = callback(
-            **{
-                name: eval_with_type(get_param[name](), typ)
-                for (name, _, _, typ) in parameters
-            }
-        )
+        callback(**params)
 
         viewer = get_viewer()
-        make_stl(mesh, filename)
         print(filename)
         if open_viewer:
             subprocess.Popen([viewer, filename])

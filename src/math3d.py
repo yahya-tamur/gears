@@ -84,6 +84,3 @@ def gram_schmidt3(v, w, z):
         z_ = scale(-1, z_)
 
     return (w, z_)
-
-
-## next time you read this apply dot, scale, cross methods to methods above please

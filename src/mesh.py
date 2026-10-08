@@ -116,8 +116,13 @@ class Mesh:
         delta = max_delta
         for segment in segments:
             c = center(segment)
-            if len(segment) > 1:  # ?? and distance(c, center_point) > 0:
+            if len(segment) > 1:
                 d = diameter(segment)
+                if distance(c, center_point) == 0:
+                    print(
+                        "scale reduce: distance of segment from center point was zero!"
+                    )
+                    continue
                 delta = min(delta, d / distance(c, center_point))
 
         line_ = []
@@ -223,7 +228,7 @@ class Mesh:
         self.add_grid(grid, reverse)
         return grid[0], grid[-1]
 
-    def add_gear(
+    def add_gear_from_teeth(
         self,
         tooth_west,
         tooth_east,
@@ -283,7 +288,6 @@ class Mesh:
                     flat_steps,
                     endpoints=False,
                 )
-                # self.add_stitch(teeth_west[i][-1], teeth_east[i+1][-1], flat_steps)
                 self.add_convex_polygon(
                     teeth_west[i][0]
                     + bottom_base[::-1]
@@ -299,14 +303,6 @@ class Mesh:
                 )
                 top_edge += top_tip[::-1] + top_base[::-1]
                 bottom_edge += bottom_tip[::-1] + bottom_base[::-1]
-                # self.add_convex_polygon(
-                #     teeth_west[i][0]
-                #     + bottom_tip[1:-1]
-                #     + teeth_east[i][0][::-1]
-                #     + bottom_base,
-                # )
-                # top_edge += top_base + top_between[::-1]
-                # bottom_edge += bottom_base + bottom_between[::-1]
             else:
                 bottom_base = interpolate_line(
                     teeth_east[i][0][0],
@@ -357,6 +353,7 @@ class Mesh:
             )
             top_bore = []
             bottom_bore = []
+            bore = bore / 2
             for i in range(bore_steps):
                 t = i * 2 * pi / bore_steps
                 top_bore.append(
@@ -384,14 +381,19 @@ class Mesh:
             top_bore.append(top_bore[0])
             bottom_bore.append(bottom_bore[0])
 
-            self.add_stitch(
-                top_bore, bottom_bore, 1, reverse=ring_gear ^ False
-            )
+            self.add_stitch(top_bore, bottom_bore, 1, reverse=ring_gear ^ False)
 
-    def translate(self, a):
-        for tri in self.mesh:
+    def translate(self, a, start=None, end=None):
+        for tri in self.mesh[start:end]:
             translate(a, tri)
 
-    def rotate(self, a):
-        for tri in self.mesh:
+    def rotate(self, a, start=None, end=None):
+        for tri in self.mesh[start:end]:
             rotate(a, tri)
+
+    def clone(self, start=None, end=None):
+        for tri in self.mesh[start:end]:
+            self.mesh.append([pt for pt in tri])
+
+    def current_length(self):
+        return len(self.mesh)

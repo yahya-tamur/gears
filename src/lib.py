@@ -1,13 +1,16 @@
+# for easier imports: converts degrees to radians and provides some default parameters
+
 from .mesh import Mesh
 from .gears import (
-    bevel_herringbone_gear_data,
-    herringbone_ring_gear_data,
-    spur_gear_data,
+    add_gear,
+    add_gear_pair,
+    add_ring_gear,
+    add_planetary_gear,
 )
 from .math import rad
 
 
-def bevel_gear(
+def make_gear(
     modul,
     tooth_number,
     partial_cone_angle,
@@ -19,50 +22,67 @@ def bevel_gear(
     flat_steps=5,
     helix_steps=10,
     bore_steps=20,
-    # according to DIN 867; set to 1.1 for DIN 58400
     da_factor=1,
     filename="a.stl",
 ):
-
-    if partial_cone_angle == 0:
-        tooth_west, tooth_east = spur_gear_data(
-            modul=modul,
-            tooth_number=tooth_number,
-            tooth_width=tooth_width,
-            pressure_angle=rad(pressure_angle),
-            helix_angle=rad(helix_angle),
-            tooth_steps=tooth_steps,
-            helix_steps=helix_steps,
-            da_factor=da_factor,
-        )
-    else:
-        tooth_west, tooth_east = bevel_herringbone_gear_data(
-            modul=modul,
-            tooth_number=tooth_number,
-            partial_cone_angle=rad(partial_cone_angle),
-            tooth_width=tooth_width,
-            pressure_angle=rad(pressure_angle),
-            helix_angle=rad(helix_angle),
-            tooth_steps=tooth_steps,
-            helix_steps=helix_steps,
-            da_factor=da_factor,
-        )
-
     mesh = Mesh()
-    mesh.add_gear(
-        tooth_west,
-        tooth_east,
+    add_gear(
+        mesh=mesh,
+        modul=modul,
         tooth_number=tooth_number,
-        flat_steps=flat_steps,
+        partial_cone_angle=rad(partial_cone_angle),
+        tooth_width=tooth_width,
         bore=bore,
+        pressure_angle=rad(pressure_angle),
+        helix_angle=rad(helix_angle),
+        tooth_steps=tooth_steps,
+        flat_steps=flat_steps,
+        helix_steps=helix_steps,
         bore_steps=bore_steps,
-        ring_gear=False,
+        da_factor=da_factor,
     )
-
     mesh.save_stl(filename)
 
 
-def ring_gear(
+def make_gear_pair(
+    modul,
+    gear_teeth,
+    pinion_teeth,
+    axis_angle,
+    tooth_width,
+    bore=0,
+    pressure_angle=20,
+    helix_angle=10,
+    together_built=True,
+    tooth_steps=16,
+    flat_steps=5,
+    helix_steps=10,
+    bore_steps=20,
+    da_factor=1,
+    filename="a.stl",
+):
+    mesh = Mesh()
+    add_gear_pair(
+        mesh=mesh,
+        modul=modul,
+        gear_teeth=gear_teeth,
+        pinion_teeth=pinion_teeth,
+        axis_angle=rad(axis_angle),
+        tooth_width=tooth_width,
+        bore=bore,
+        pressure_angle=rad(pressure_angle),
+        helix_angle=rad(helix_angle),
+        together_built=together_built,
+        tooth_steps=tooth_steps,
+        flat_steps=flat_steps,
+        helix_steps=helix_steps,
+        bore_steps=bore_steps,
+        da_factor=da_factor,
+    )
+    mesh.save_stl(filename)
+
+
+def make_ring_gear(
     modul,
     tooth_number,
     width,
@@ -73,11 +93,13 @@ def ring_gear(
     tooth_steps=16,
     flat_steps=5,
     helix_steps=10,
-    cylinder_steps=20,
+    bore_steps=20,
     da_factor=1,
     filename="a.stl",
 ):
-    tooth_west, tooth_east, radius = herringbone_ring_gear_data(
+    mesh = Mesh()
+    add_ring_gear(
+        mesh=mesh,
         modul=modul,
         tooth_number=tooth_number,
         width=width,
@@ -85,137 +107,52 @@ def ring_gear(
         pressure_angle=rad(pressure_angle),
         helix_angle=rad(helix_angle),
         shortening_factor=shortening_factor,
-        helix_steps=helix_steps,
         tooth_steps=tooth_steps,
-        da_factor=da_factor
-    )
-
-    mesh = Mesh()
-    mesh.add_gear(
-        tooth_west,
-        tooth_east,
-        tooth_number=tooth_number,
         flat_steps=flat_steps,
-        bore=radius,
-        bore_steps=cylinder_steps,
-        ring_gear=True,
+        helix_steps=helix_steps,
+        bore_steps=20,
+        da_factor=da_factor,
     )
-
     mesh.save_stl(filename)
 
 
-# def bevel_gear(
-#    modul,
-#    tooth_number,
-#    partial_cone_angle,
-#    tooth_width,
-#    bore=0,
-#    pressure_angle=20,
-#    helix_angle=0,
-#    tooth_step=16,
-# ):
-#    return bevel_gear_assembly(
-#        modul,
-#        tooth_number,
-#        rad(partial_cone_angle),
-#        tooth_width,
-#        bore,
-#        rad(pressure_angle),
-#        rad(helix_angle),
-#        tooth_step,
-#    )
-
-# def bevel_gear_pair(
-#    modul,
-#    gear_teeth,
-#    pinion_teeth,
-#    tooth_width,
-#    axis_angle=90,
-#    gear_bore=0,
-#    pinion_bore=0,
-#    pressure_angle=20,
-#    helix_angle=0,
-#    together_built=True,
-#    tooth_step=16,
-# ):
-#    return bevel_gear_pair_assembly(
-#        modul,
-#        gear_teeth,
-#        pinion_teeth,
-#        rad(axis_angle),
-#        tooth_width,
-#        gear_bore,
-#        pinion_bore,
-#        rad(pressure_angle),
-#        rad(helix_angle),
-#        together_built,
-#        tooth_step,
-#    )
-
-
-# def bevel_herringbone_gear_pair(
-#    modul,
-#    gear_teeth,
-#    pinion_teeth,
-#    tooth_width,
-#    axis_angle=90,
-#    gear_bore=0,
-#    pinion_bore=0,
-#    pressure_angle=20,
-#    helix_angle=10,
-#    together_built=True,
-#    tooth_step=16,
-# ):
-#    return bevel_herringbone_gear_pair_assembly(
-#        modul,
-#        gear_teeth,
-#        pinion_teeth,
-#        rad(axis_angle),
-#        tooth_width,
-#        gear_bore,
-#        pinion_bore,
-#        rad(pressure_angle),
-#        rad(helix_angle),
-#        together_built,
-#        tooth_step,
-#    )
-
-
-# def planetary_gear(
-#    modul,
-#    sun_teeth,
-#    planet_teeth,
-#    width,
-#    number_planets=0,
-#    rim_width=5,
-#    sun_bore=2,
-#    planet_bore=1,
-#    pressure_angle=20,
-#    helix_angle=10,
-#    together_built=True,
-#    tooth_step=16,
-#    ring_shortening_factor=1,
-# ):
-#    return planetary_gear_assembly(
-#        modul,
-#        sun_teeth,
-#        planet_teeth,
-#        number_planets,
-#        width,
-#        rim_width,
-#        sun_bore,
-#        planet_bore,
-#        rad(pressure_angle),
-#        rad(helix_angle),
-#        together_built,
-#        tooth_step,
-#        ring_shortening_factor,
-#    )
-
-
-# might be useful from cli
-
-
-# def disp(mesh, viewer="fstl", filename="a.stl"):
-#    make_stl(mesh, filename)
-#    os.system(f"{viewer} {filename}")
+def make_planetary_gear(
+    modul,
+    sun_teeth,
+    planet_teeth,
+    number_planets,
+    width,
+    rim_width=5,
+    bore=0,
+    pressure_angle=20,
+    helix_angle=15,
+    ring_shortening_factor=0.6,
+    together_built=True,
+    tooth_steps=16,
+    flat_steps=5,
+    helix_steps=10,
+    bore_steps=30,
+    da_factor=1,
+    filename="a.stl",
+):
+    mesh = Mesh()
+    add_planetary_gear(
+        mesh=mesh,
+        modul=modul,
+        sun_teeth=sun_teeth,
+        planet_teeth=planet_teeth,
+        number_planets=number_planets,
+        width=width,
+        rim_width=rim_width,
+        bore=bore,
+        pressure_angle=rad(pressure_angle),
+        helix_angle=rad(helix_angle),
+        ring_shortening_factor=ring_shortening_factor,
+        together_built=together_built,
+        tooth_steps=tooth_steps,
+        flat_steps=flat_steps,
+        helix_steps=helix_steps,
+        bore_steps=bore_steps,
+        da_factor=da_factor,
+    )
+    mesh.save_stl(filename)
