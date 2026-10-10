@@ -14,9 +14,10 @@ def run_gear_pair_gui():
         ("pressure_angle", 20.0, "Pressure Angle", "float"),
         ("helix_angle", 40.0, "Helix Angle", "float"),
         ("together_built", "True", "Assemble Model", "bool"),
-        ("tooth_steps", 16, "Teeth Resolution", "int"),
-        ("helix_steps", 20, "Helix Resolution", "int"),
-        ("bore_steps", 10, "Bore Resolution", "int"),
+        ("tooth_steps", 16, "Teeth Steps", "int"),
+        ("helix_steps", 5, "Helix Steps", "int"),
+        ("flat_steps", 3, "Flat Steps", "int"),
+        ("bore_steps", 10, "Bore Steps", "int"),
         ("da_factor", 1, "Addendum Factor", "float"),
     ]
 
@@ -40,9 +41,10 @@ def run_planetary_gear_gui():
         ("helix_angle", 30, "Helix Angle", "float"),
         ("ring_shortening_factor", 0.3, "Ring Shortening Factor", "float"),
         ("together_built", "True", "Assemble Model", "bool"),
-        ("tooth_steps", 16, "Teeth Resolution", "int"),
-        ("helix_steps", 20, "Helix Resolution", "int"),
-        ("bore_steps", 40, "Ring Resolution", "int"),
+        ("tooth_steps", 16, "Teeth Steps", "int"),
+        ("helix_steps", 5, "Helix Steps", "int"),
+        ("flat_steps", 3, "Flat Steps", "int"),
+        ("bore_steps", 20, "Ring Steps", "int"),
         ("da_factor", 1, "Addendum Factor", "float"),
     ]
 
