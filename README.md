@@ -52,6 +52,8 @@ Here are a few that might not be:
 
 nice to have:
 * align gears exactly the way openscad aligns them so the comparison is easier?
-    * Also, there may be some tooth overlap issues without the 'clearence'.
+    * This is much better than the earlier revision! The only possible remaining issues are:
+        - What's going on with the bevel gear tooth tips?
+        - pick better shortening factor for comparison
 * gui for some other functions?
 * port other gear designs?

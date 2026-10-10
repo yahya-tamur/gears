@@ -18,6 +18,7 @@ from .math3d import (
 from math import pi, sin, cos
 import struct
 
+
 # factor = 0 -> point,
 # factor = 1 -> center
 # factor = -1 -> center + 2*(point - center)
